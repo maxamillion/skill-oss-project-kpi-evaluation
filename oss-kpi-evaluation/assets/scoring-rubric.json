@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "Machine-readable scoring criteria for OSS KPI evaluation",
+  "version": "2.0",
+  "description": "Machine-readable scoring criteria for OSS KPI evaluation with checklist-based qualitative metrics and confidence scoring",
   "scoring_scale": {
     "min": 1,
     "max": 5,
@@ -33,6 +33,72 @@
       "rating": "Critical",
       "description": "Major issues, high risk adoption"
     }
+  },
+  "confidence_scoring": {
+    "description": "Confidence score indicates reliability of metric values",
+    "factors": {
+      "source_verified": {
+        "weight": 0.30,
+        "description": "Metric value verified by independent re-fetch"
+      },
+      "sample_quality": {
+        "weight": 0.25,
+        "description": "Sample size and methodology meet requirements"
+      },
+      "data_freshness": {
+        "weight": 0.20,
+        "description": "Data collected within acceptable time window"
+      },
+      "cross_validated": {
+        "weight": 0.15,
+        "description": "Value confirmed by multiple sources"
+      },
+      "bounds_valid": {
+        "weight": 0.10,
+        "description": "Value passes logical bounds checks"
+      }
+    },
+    "ratings": {
+      "high": {"min": 0.8, "max": 1.0, "description": "High confidence - verified and validated"},
+      "medium": {"min": 0.6, "max": 0.79, "description": "Medium confidence - mostly verified"},
+      "low": {"min": 0.4, "max": 0.59, "description": "Low confidence - limited verification"},
+      "very_low": {"min": 0.0, "max": 0.39, "description": "Very low confidence - treat with caution"}
+    }
+  },
+  "bounds_validation": {
+    "description": "Logical constraints between metrics for sanity checking",
+    "rules": [
+      {
+        "id": "B1",
+        "name": "bus_factor_upper_bound",
+        "condition": "bus_factor <= contributor_count",
+        "error_action": "Flag as data error, require recalculation"
+      },
+      {
+        "id": "B2",
+        "name": "contributor_fork_ratio",
+        "condition": "contributor_count <= fork_count * 10",
+        "error_action": "Flag for review - unusually high contributor ratio"
+      },
+      {
+        "id": "B3",
+        "name": "engagement_sample_validity",
+        "condition": "if contributor_count < 5 and (issue_engagement > 90 or pr_engagement > 90) then flag",
+        "error_action": "Flag as suspicious sample size - very small population"
+      },
+      {
+        "id": "B4",
+        "name": "activity_consistency",
+        "condition": "if last_commit_recency > 90 and release_cadence > 6 then flag",
+        "error_action": "Flag as inconsistent - releases without commits"
+      },
+      {
+        "id": "B5",
+        "name": "growth_activity_consistency",
+        "condition": "if contributor_growth > 25 and last_commit_recency > 180 then flag",
+        "error_action": "Flag as inconsistent - growth without recent activity"
+      }
+    ]
   },
   "default_weights": {
     "community_health": 0.1667,
@@ -195,13 +261,22 @@
         "security_policy": {
           "name": "Security Policy",
           "description": "Presence and completeness of SECURITY.md",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Comprehensive policy with disclosure process, SLA, and PGP key" },
-            "4": { "criteria": "Policy with disclosure process and response timeline" },
-            "3": { "criteria": "Basic SECURITY.md with reporting instructions" },
-            "2": { "criteria": "Security info in README only" },
-            "1": { "criteria": "No security documentation" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_security_md", "description": "SECURITY.md file exists", "weight": 1.5},
+            {"id": "has_disclosure_process", "description": "Clear vulnerability reporting process", "weight": 1.5},
+            {"id": "has_response_timeline", "description": "Expected response time documented", "weight": 1.0},
+            {"id": "has_pgp_key", "description": "PGP key or secure contact method provided", "weight": 0.5},
+            {"id": "has_scope_definition", "description": "Security scope defined (what's covered)", "weight": 0.5},
+            {"id": "has_bug_bounty_reference", "description": "Bug bounty program referenced", "weight": 0.5}
+          ],
+          "max_score": 5.5,
+          "scoring": {
+            "5": {"min": 5.0, "description": "≥5.0 weighted items present"},
+            "4": {"min": 4.0, "max": 4.9, "description": "4.0-4.9 weighted items present"},
+            "3": {"min": 2.5, "max": 3.9, "description": "2.5-3.9 weighted items present"},
+            "2": {"min": 1.0, "max": 2.4, "description": "1.0-2.4 weighted items present"},
+            "1": {"max": 0.9, "description": "<1.0 weighted items present"}
           }
         },
         "vulnerability_disclosure": {
@@ -263,37 +338,67 @@
         "readme_completeness": {
           "name": "README Completeness",
           "description": "Presence of key README sections",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "All sections + badges + examples + screenshots/diagrams" },
-            "4": { "criteria": "All 5 core sections present and detailed" },
-            "3": { "criteria": "4 of 5 core sections present" },
-            "2": { "criteria": "2-3 core sections present" },
-            "1": { "criteria": "Minimal or no README" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_description", "description": "Project description/overview", "weight": 1.0},
+            {"id": "has_installation", "description": "Installation instructions", "weight": 1.0},
+            {"id": "has_usage", "description": "Basic usage examples", "weight": 1.0},
+            {"id": "has_contributing_section", "description": "Contributing section or link", "weight": 1.0},
+            {"id": "has_license_section", "description": "License information", "weight": 1.0},
+            {"id": "has_badges", "description": "Status badges (CI, coverage, version)", "weight": 0.5},
+            {"id": "has_code_examples", "description": "Code examples/snippets", "weight": 0.5},
+            {"id": "has_visuals", "description": "Screenshots, diagrams, or GIFs", "weight": 0.5}
+          ],
+          "max_score": 6.5,
+          "scoring": {
+            "5": {"min": 6.0, "description": "≥6.0 weighted items present"},
+            "4": {"min": 5.0, "max": 5.9, "description": "5.0-5.9 weighted items present"},
+            "3": {"min": 4.0, "max": 4.9, "description": "4.0-4.9 weighted items present"},
+            "2": {"min": 2.0, "max": 3.9, "description": "2.0-3.9 weighted items present"},
+            "1": {"max": 1.9, "description": "<2.0 weighted items present"}
           }
         },
         "api_documentation": {
           "name": "API Documentation",
           "description": "Presence and quality of API/library documentation",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Comprehensive API docs with search, examples, versioning" },
-            "4": { "criteria": "Complete API reference with examples" },
-            "3": { "criteria": "Partial API documentation" },
-            "2": { "criteria": "Inline code comments only" },
-            "1": { "criteria": "No API documentation" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_docs_site", "description": "Dedicated documentation site", "weight": 1.0},
+            {"id": "has_api_reference", "description": "API reference documentation", "weight": 1.5},
+            {"id": "has_function_signatures", "description": "Function/method signatures documented", "weight": 1.0},
+            {"id": "has_parameter_descriptions", "description": "Parameter descriptions", "weight": 1.0},
+            {"id": "has_return_value_docs", "description": "Return value documentation", "weight": 1.0},
+            {"id": "has_examples_in_docs", "description": "Code examples in documentation", "weight": 1.0},
+            {"id": "has_search_functionality", "description": "Search functionality", "weight": 0.5}
+          ],
+          "max_score": 7.0,
+          "scoring": {
+            "5": {"min": 6.0, "description": "≥6.0 weighted items present"},
+            "4": {"min": 4.5, "max": 5.9, "description": "4.5-5.9 weighted items present"},
+            "3": {"min": 3.0, "max": 4.4, "description": "3.0-4.4 weighted items present"},
+            "2": {"min": 1.5, "max": 2.9, "description": "1.5-2.9 weighted items present"},
+            "1": {"max": 1.4, "description": "<1.5 weighted items present"}
           }
         },
         "getting_started": {
           "name": "Getting Started Guide",
           "description": "Presence of beginner-friendly onboarding documentation",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Multiple tutorials, video content, interactive examples" },
-            "4": { "criteria": "Comprehensive getting started with working examples" },
-            "3": { "criteria": "Basic getting started section in README" },
-            "2": { "criteria": "Installation instructions only" },
-            "1": { "criteria": "No getting started content" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_quickstart_section", "description": "Quickstart or getting started section", "weight": 1.5},
+            {"id": "has_prerequisites_listed", "description": "Prerequisites/requirements listed", "weight": 1.0},
+            {"id": "has_step_by_step_guide", "description": "Step-by-step installation guide", "weight": 1.0},
+            {"id": "has_working_examples", "description": "Working code examples", "weight": 1.0},
+            {"id": "has_expected_output", "description": "Expected output shown", "weight": 0.5},
+            {"id": "has_troubleshooting", "description": "Troubleshooting section", "weight": 0.5}
+          ],
+          "max_score": 5.5,
+          "scoring": {
+            "5": {"min": 5.0, "description": "≥5.0 weighted items present"},
+            "4": {"min": 4.0, "max": 4.9, "description": "4.0-4.9 weighted items present"},
+            "3": {"min": 2.5, "max": 3.9, "description": "2.5-3.9 weighted items present"},
+            "2": {"min": 1.5, "max": 2.4, "description": "1.5-2.4 weighted items present"},
+            "1": {"max": 1.4, "description": "<1.5 weighted items present"}
           }
         },
         "changelog": {
@@ -311,13 +416,23 @@
         "contributing_guide": {
           "name": "Contributing Guide",
           "description": "Presence and quality of contribution guidelines",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Comprehensive guide: setup, testing, style, review process, CoC" },
-            "4": { "criteria": "Complete guide with development setup and PR process" },
-            "3": { "criteria": "Basic CONTRIBUTING.md with PR instructions" },
-            "2": { "criteria": "Contributing info in README only" },
-            "1": { "criteria": "No contributing guidelines" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_contributing_md", "description": "CONTRIBUTING.md file exists", "weight": 1.0},
+            {"id": "has_setup_instructions", "description": "Development setup instructions", "weight": 1.0},
+            {"id": "has_pr_process", "description": "PR/contribution process documented", "weight": 1.0},
+            {"id": "has_code_style_guide", "description": "Code style guidelines", "weight": 1.0},
+            {"id": "has_testing_instructions", "description": "Testing instructions", "weight": 1.0},
+            {"id": "has_coc_reference", "description": "Code of conduct reference", "weight": 0.5},
+            {"id": "has_issue_templates", "description": "Issue/PR templates", "weight": 0.5}
+          ],
+          "max_score": 6.0,
+          "scoring": {
+            "5": {"min": 5.5, "description": "≥5.5 weighted items present"},
+            "4": {"min": 4.0, "max": 5.4, "description": "4.0-5.4 weighted items present"},
+            "3": {"min": 2.5, "max": 3.9, "description": "2.5-3.9 weighted items present"},
+            "2": {"min": 1.0, "max": 2.4, "description": "1.0-2.4 weighted items present"},
+            "1": {"max": 0.9, "description": "<1.0 weighted items present"}
           }
         }
       }
@@ -400,13 +515,22 @@
         "test_presence": {
           "name": "Test Presence",
           "description": "Evidence of automated tests in the repository",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Comprehensive test suite: unit, integration, e2e" },
-            "4": { "criteria": "Good test coverage with multiple test types" },
-            "3": { "criteria": "Basic test suite present" },
-            "2": { "criteria": "Minimal tests or examples only" },
-            "1": { "criteria": "No tests" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_test_directory", "description": "Test directory exists", "weight": 1.0},
+            {"id": "has_unit_tests", "description": "Unit tests present", "weight": 1.5},
+            {"id": "has_integration_tests", "description": "Integration tests present", "weight": 1.0},
+            {"id": "has_e2e_tests", "description": "End-to-end tests present", "weight": 1.0},
+            {"id": "has_test_in_ci", "description": "Tests run in CI", "weight": 1.0},
+            {"id": "has_test_documentation", "description": "Test documentation", "weight": 0.5}
+          ],
+          "max_score": 6.0,
+          "scoring": {
+            "5": {"min": 5.5, "description": "≥5.5 weighted items present"},
+            "4": {"min": 4.0, "max": 5.4, "description": "4.0-5.4 weighted items present"},
+            "3": {"min": 2.5, "max": 3.9, "description": "2.5-3.9 weighted items present"},
+            "2": {"min": 1.0, "max": 2.4, "description": "1.0-2.4 weighted items present"},
+            "1": {"max": 0.9, "description": "<1.0 weighted items present"}
           }
         },
         "test_coverage": {
@@ -425,13 +549,23 @@
         "ci_cd_configuration": {
           "name": "CI/CD Configuration",
           "description": "Presence and completeness of CI/CD automation",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Full CI/CD: tests, linting, security scans, automated releases" },
-            "4": { "criteria": "CI with tests, linting, and build verification" },
-            "3": { "criteria": "Basic CI with test runs" },
-            "2": { "criteria": "CI present but minimal checks" },
-            "1": { "criteria": "No CI/CD" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_ci_config", "description": "CI configuration exists", "weight": 1.0},
+            {"id": "has_tests_in_ci", "description": "Tests run in CI", "weight": 1.5},
+            {"id": "has_linting_in_ci", "description": "Linting in CI", "weight": 1.0},
+            {"id": "has_security_scans", "description": "Security scans in CI", "weight": 1.0},
+            {"id": "has_build_verification", "description": "Build verification", "weight": 0.5},
+            {"id": "has_automated_releases", "description": "Automated releases", "weight": 1.0},
+            {"id": "has_multi_platform_testing", "description": "Multi-platform testing", "weight": 0.5}
+          ],
+          "max_score": 6.5,
+          "scoring": {
+            "5": {"min": 6.0, "description": "≥6.0 weighted items present"},
+            "4": {"min": 4.5, "max": 5.9, "description": "4.5-5.9 weighted items present"},
+            "3": {"min": 2.5, "max": 4.4, "description": "2.5-4.4 weighted items present"},
+            "2": {"min": 1.0, "max": 2.4, "description": "1.0-2.4 weighted items present"},
+            "1": {"max": 0.9, "description": "<1.0 weighted items present"}
           }
         },
         "code_review_practice": {
@@ -450,26 +584,54 @@
         "linting_formatting": {
           "name": "Linting and Formatting",
           "description": "Presence of code quality tooling",
-          "type": "qualitative",
-          "thresholds": {
-            "5": { "criteria": "Linting + formatting + pre-commit hooks + CI enforcement" },
-            "4": { "criteria": "Linting and formatting with CI enforcement" },
-            "3": { "criteria": "Linting configuration present" },
-            "2": { "criteria": "EditorConfig or basic formatting only" },
-            "1": { "criteria": "No linting or formatting configuration" }
+          "type": "checklist",
+          "checklist_items": [
+            {"id": "has_linter_config", "description": "Linter configuration exists", "weight": 1.0},
+            {"id": "has_formatter_config", "description": "Formatter configuration exists", "weight": 1.0},
+            {"id": "has_precommit_hooks", "description": "Pre-commit hooks configured", "weight": 1.0},
+            {"id": "has_ci_lint_enforcement", "description": "Linting enforced in CI", "weight": 1.0},
+            {"id": "has_editorconfig", "description": "EditorConfig present", "weight": 0.5},
+            {"id": "has_type_checking", "description": "Type checking configured", "weight": 0.5}
+          ],
+          "max_score": 5.0,
+          "scoring": {
+            "5": {"min": 4.5, "description": "≥4.5 weighted items present"},
+            "4": {"min": 3.5, "max": 4.4, "description": "3.5-4.4 weighted items present"},
+            "3": {"min": 2.0, "max": 3.4, "description": "2.0-3.4 weighted items present"},
+            "2": {"min": 1.0, "max": 1.9, "description": "1.0-1.9 weighted items present"},
+            "1": {"max": 0.9, "description": "<1.0 weighted items present"}
           }
         }
       }
     }
   },
   "calculation": {
-    "metric_score": "Apply threshold rules to raw value",
+    "metric_score": "Apply threshold rules to raw value. For checklist metrics, sum weighted items and apply scoring thresholds.",
     "category_score": "Average of available metric scores (exclude NOT_AVAILABLE)",
-    "overall_score": "Weighted average of category scores"
+    "overall_score": "Weighted average of category scores",
+    "confidence_score": "Calculate per-metric confidence using confidence_scoring.factors, then average for category"
+  },
+  "checklist_calculation": {
+    "description": "How to calculate scores from checklist results",
+    "steps": [
+      "1. For each checklist item, if present=true, add weight to checklist_score",
+      "2. Compare checklist_score to scoring thresholds",
+      "3. Assign score (1-5) based on which threshold range the checklist_score falls into"
+    ],
+    "example": {
+      "checklist_score": 4.5,
+      "scoring_lookup": "4.5 >= 4.0 min for score 4, so metric_score = 4"
+    }
   },
   "not_available_handling": {
     "metric": "Exclude from category average",
     "category": "If <3 metrics available, mark category as 'Low Confidence'",
     "overall": "Adjust weight distribution among available categories"
+  },
+  "unverified_handling": {
+    "description": "How to handle metrics marked as UNVERIFIED by source verification",
+    "metric": "Report both values, reduce confidence score by 50%",
+    "category": "If >2 metrics unverified, flag category for re-evaluation",
+    "report": "Include in Data Quality Assessment with explanation"
   }
 }

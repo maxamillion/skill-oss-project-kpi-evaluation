@@ -116,6 +116,108 @@ All data includes collection context:
 
 ---
 
+## Semantic Consistency Rules
+
+Cross-category validation rules to detect data errors and suspicious patterns.
+
+### Rule Definitions
+
+| Rule ID | Name | Condition | Detection | Action |
+|---------|------|-----------|-----------|--------|
+| R1 | Bus Factor Bound | `bus_factor > contributor_count` | Data error | Flag as data error, require recalculation from intermediate data |
+| R2 | Small Sample High Engagement | `contributor_count < 5` AND (`issue_engagement > 90%` OR `pr_engagement > 90%`) | Suspicious sample | Flag as "Small sample size - engagement rate may not be representative" |
+| R3 | Inactive but Releasing | `last_commit_recency > 90 days` AND `release_cadence > 6 releases/year` | Inconsistent data | Flag for investigation - releases without recent commits |
+| R4 | Growing but Dormant | `contributor_growth > 25%` AND `last_commit_recency > 180 days` | Inconsistent data | Flag for investigation - growth metric inconsistent with activity |
+| R5 | Coverage Without Tests | `test_coverage > 0%` AND `test_presence.has_test_directory = false` | Data error | Flag as impossible - coverage requires tests |
+| R6 | Reviews Without PRs | `code_review_practice > 0%` AND sample shows zero merged PRs | Data error | Flag as data collection error |
+
+### Rule Application
+
+During Phase 4 (Cross-Validation), apply all semantic consistency rules:
+
+```
+For each rule R1-R6:
+  1. Evaluate condition using collected metrics
+  2. If condition is TRUE, trigger the specified action
+  3. Record in cross_validation_results:
+     - rule_id
+     - condition_evaluated
+     - result (pass/fail)
+     - action_taken
+```
+
+### Flagged Metric Handling
+
+When a metric combination triggers a semantic rule:
+
+1. **Data Errors (R1, R5, R6)**:
+   - Recalculate from intermediate data if available
+   - If recalculation fails, mark affected metrics as "INCONSISTENT"
+   - Reduce confidence score for affected category
+
+2. **Suspicious Patterns (R2)**:
+   - Add note to metric: "Small sample size - interpret with caution"
+   - Do not change the value, but reduce confidence score
+
+3. **Inconsistent Data (R3, R4)**:
+   - Investigate both metrics for data freshness issues
+   - If timestamps differ significantly, prefer more recent data
+   - Add note explaining the inconsistency
+
+---
+
+## Source Authority Hierarchy
+
+When multiple sources provide conflicting values for the same metric, use this hierarchy to determine which value to report.
+
+### Authority Levels (Highest to Lowest)
+
+| Level | Source Type | Examples | Trust Reason |
+|-------|-------------|----------|--------------|
+| 1 | GitHub API (authenticated) | `gh api repos/...`, `gh repo view` | Authoritative source, real-time |
+| 2 | Package Registry API | npm registry, PyPI JSON API, crates.io API | Authoritative for package data |
+| 3 | Real-time Analytics | Codecov API, Ecosyste.ms current data | Direct integration, near real-time |
+| 4 | Cached/Historical Analytics | star-history.com, wayback data | May be stale, but verifiable |
+| 5 | WebSearch Results | Search engine snippets, third-party articles | Unverified, may be outdated or incorrect |
+
+### Discrepancy Resolution Protocol
+
+When sources at different levels disagree:
+
+1. **Always prefer higher authority level** (lower number wins)
+2. **Report the discrepancy** in Cross-Validation Results:
+   ```
+   | Metric | Authoritative Source | Value | Secondary Source | Value | Variance |
+   |--------|---------------------|-------|------------------|-------|----------|
+   | star_count | GitHub API (L1) | 15,234 | star-history (L4) | 14,890 | 2.3% |
+   ```
+3. **If variance > 10%** between adjacent levels, investigate for:
+   - Timing differences (check timestamps)
+   - API version differences
+   - Scope differences (e.g., total vs. recent)
+
+### WebSearch-Derived Data
+
+Data from WebSearch (Level 5) requires special handling:
+
+1. **Never report as fact** without primary source confirmation
+2. **For CVEs**: Must verify at nvd.nist.gov
+3. **For audits**: Must locate actual audit report
+4. **For usage claims**: Treat as "reported" not "confirmed"
+
+Mark unconfirmed WebSearch claims as:
+```json
+{
+  "value": "UNCONFIRMED",
+  "claim": "Security audit by XYZ Corp in 2023",
+  "source": "WebSearch result",
+  "verification_attempted": true,
+  "primary_source_found": false
+}
+```
+
+---
+
 ## Bias Types and Mitigations
 
 ### Confirmation Bias

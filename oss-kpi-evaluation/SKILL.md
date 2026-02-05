@@ -77,14 +77,54 @@ See `references/RESEARCH-PROMPTS.md` for subagent prompt templates.
 - [ ] Flag any subagent failures or incomplete data
 - [ ] Aggregate results into unified data structure
 
+### Phase 3.5: Source Verification
+
+**Purpose**: Prevent hallucinated values by independently re-fetching critical metrics.
+
+**HIGH Priority Metrics** (must verify):
+- `star_count` - via `gh repo view {owner}/{repo} --json stargazerCount`
+- `contributor_count` - via `gh api repos/{owner}/{repo}/stats/contributors`
+- `download_count` - via package registry API
+
+**Verification Protocol**:
+- [ ] Re-fetch each HIGH priority metric using the source command
+- [ ] Compare subagent-reported value with freshly fetched value
+- [ ] Apply 5% tolerance for timing differences
+- [ ] Mark metrics exceeding tolerance as "UNVERIFIED" with both values
+- [ ] If >3 metrics fail verification, trigger subagent re-run for affected category
+
+**Verification Output Format**:
+```json
+{
+  "metric": "star_count",
+  "subagent_value": 15234,
+  "verified_value": 15189,
+  "variance_percent": 0.3,
+  "status": "VERIFIED",
+  "verified_at": "ISO-8601 timestamp"
+}
+```
+
+**Unverified Metric Handling**:
+- NEVER report disputed values as fact
+- Report as: "star_count: UNVERIFIED (subagent: 15234, verification: 12891)"
+- Flag in Data Quality Assessment section
+- Reduce confidence score for affected category
+
 ### Phase 4: Cross-Validation
 
 - [ ] Compare overlapping metrics between subagents
 - [ ] Flag discrepancies exceeding 10% variance
 - [ ] Verify all URLs are accessible
 - [ ] Check temporal consistency (data freshness)
+- [ ] **Bounds Validation**: Verify logical constraints between metrics
+  - `bus_factor` must be ≤ `contributor_count`
+  - `contributor_count` must be ≤ `fork_count * 10` (heuristic upper bound)
+  - `issue_engagement` >90% with <5 contributors warrants scrutiny
+- [ ] **Independent Recalculation**: For calculated metrics (bus_factor, engagement rates), recompute from intermediate data provided by subagents. Flag >5% variance from reported value.
+- [ ] **Temporal Sanity**: Verify all subagent collections completed within 5 minutes of each other
 
-See `references/BIAS-PREVENTION.md` for validation protocols.
+See `references/BIAS-PREVENTION.md` for validation protocols and semantic consistency rules.
 
 ### Phase 5: Mechanical Scoring
 

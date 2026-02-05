@@ -449,6 +449,80 @@ Provides:
 
 ---
 
+## Sampling Methodology
+
+When collecting data from populations (issues, PRs, contributors, etc.), follow these sampling requirements to ensure statistical validity.
+
+### Sample Size Requirements
+
+| Population Size | Sample Size | Sampling Method | Confidence Level |
+|-----------------|-------------|-----------------|------------------|
+| < 50 | All (census) | N/A - full population | 100% |
+| 50 - 100 | 50 | Stratified by time period | ~95% |
+| 101 - 500 | 100 | Stratified by time period | ~95% |
+| > 500 | 100-150 | Stratified by time period | ~95% |
+
+### Stratified Sampling by Time Period
+
+For time-series data (issues, PRs, commits), stratify samples to avoid recency bias:
+
+```
+Population: 200 closed issues in past 6 months
+Sample size: 100
+Stratification:
+  - Month 1: 17 issues (proportional to monthly volume)
+  - Month 2: 18 issues
+  - Month 3: 15 issues
+  - Month 4: 16 issues
+  - Month 5: 17 issues
+  - Month 6: 17 issues
+Selection: Random within each stratum
+```
+
+If proportional stratification is impractical, use most-recent sampling but document the limitation.
+
+### Required Sampling Documentation
+
+Every sampled metric must include:
+
+```json
+{
+  "metric": "issue_resolution_time",
+  "population_size": 342,
+  "sample_size": 100,
+  "sampling_method": "stratified_by_month",
+  "confidence_level": "95%",
+  "margin_of_error": "±8%",
+  "sampling_notes": "Proportional allocation across 6 months"
+}
+```
+
+### Minimum Sample Sizes for Validity
+
+| Metric | Minimum Sample | Rationale |
+|--------|----------------|-----------|
+| Issue resolution time | 30 | Median calculation stability |
+| PR merge time | 30 | Median calculation stability |
+| Issue engagement | 30 | Percentage reliability |
+| PR engagement | 30 | Percentage reliability |
+| Code review practice | 30 | Percentage reliability |
+| Fork activity | 50 | Fork behavior variance |
+
+If population is smaller than minimum sample, use census (all items) and note low confidence.
+
+### Sample Quality Flags
+
+Flag samples that may not be representative:
+
+| Condition | Flag | Action |
+|-----------|------|--------|
+| Sample < 10 | "Very small sample" | Reduce confidence to "Low" |
+| Sample < 30 | "Small sample" | Reduce confidence to "Medium" |
+| >50% from single month | "Temporal clustering" | Note potential seasonality |
+| >30% from single author | "Author concentration" | Note in findings |
+
+---
+
 ## Data Collection Best Practices
 
 ### Rate Limit Management

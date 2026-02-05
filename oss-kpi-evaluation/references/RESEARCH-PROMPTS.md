@@ -53,6 +53,8 @@ INSTRUCTIONS:
 
 OUTPUT FORMAT (respond with ONLY this JSON, no other text):
 
+IMPORTANT: For calculated metrics (bus_factor, engagement rates, growth), you MUST include the intermediate calculation data to enable verification. This prevents errors and allows audit trail.
+
 {
   "repository": "{owner}/{repo}",
   "category": "community_health",
@@ -65,27 +67,57 @@ OUTPUT FORMAT (respond with ONLY this JSON, no other text):
     },
     "contributor_growth": {
       "value": <percentage or "NOT_AVAILABLE">,
-      "current_period": <number>,
-      "previous_period": <number>,
+      "calculation": {
+        "current_period_start": "<ISO-8601 date>",
+        "current_period_end": "<ISO-8601 date>",
+        "current_period_contributors": <number>,
+        "previous_period_start": "<ISO-8601 date>",
+        "previous_period_end": "<ISO-8601 date>",
+        "previous_period_contributors": <number>,
+        "formula": "(current - previous) / previous * 100"
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "bus_factor": {
       "value": <number or "NOT_AVAILABLE">,
+      "calculation": {
+        "total_commits_12_months": <number>,
+        "contributor_distribution": [
+          {"contributor": "<username>", "commits": <number>, "percent": <number>, "cumulative_percent": <number>}
+        ],
+        "threshold_50_percent_reached_at": <number of contributors>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "issue_engagement": {
       "value": <percentage or "NOT_AVAILABLE">,
-      "sample_size": <number>,
-      "responded_within_7days": <number>,
+      "calculation": {
+        "population_size": <total closed issues>,
+        "sample_size": <number sampled>,
+        "sampling_method": "most recent closed",
+        "issues_examined": [
+          {"number": <issue_number>, "created_at": "<ISO-8601>", "first_response_at": "<ISO-8601 or null>", "response_days": <number or null>, "within_7_days": <boolean>}
+        ],
+        "responded_within_7days": <count>,
+        "response_rate_percent": <calculated value>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "pr_engagement": {
       "value": <percentage or "NOT_AVAILABLE">,
-      "sample_size": <number>,
-      "reviewed_within_7days": <number>,
+      "calculation": {
+        "population_size": <total merged PRs>,
+        "sample_size": <number sampled>,
+        "sampling_method": "most recent merged",
+        "prs_examined": [
+          {"number": <pr_number>, "created_at": "<ISO-8601>", "first_review_at": "<ISO-8601 or null>", "review_days": <number or null>, "within_7_days": <boolean>}
+        ],
+        "reviewed_within_7days": <count>,
+        "review_rate_percent": <calculated value>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     }
@@ -143,6 +175,8 @@ INSTRUCTIONS:
 
 OUTPUT FORMAT (respond with ONLY this JSON, no other text):
 
+IMPORTANT: For calculated metrics (resolution time, merge time), you MUST include the intermediate calculation data to enable verification. This prevents errors and allows audit trail.
+
 {
   "repository": "{owner}/{repo}",
   "category": "maintenance",
@@ -150,31 +184,66 @@ OUTPUT FORMAT (respond with ONLY this JSON, no other text):
   "metrics": {
     "commit_frequency": {
       "value": <number or "NOT_AVAILABLE">,
-      "total_commits_52_weeks": <number>,
+      "calculation": {
+        "period_start": "<ISO-8601 date>",
+        "period_end": "<ISO-8601 date>",
+        "total_commits": <number>,
+        "weeks_in_period": 52,
+        "formula": "total_commits / weeks_in_period"
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "release_cadence": {
       "value": <number or "NOT_AVAILABLE">,
-      "releases_past_12_months": <number>,
+      "calculation": {
+        "period_start": "<ISO-8601 date>",
+        "period_end": "<ISO-8601 date>",
+        "releases": [
+          {"tag": "<tag_name>", "date": "<ISO-8601 date>"}
+        ],
+        "total_releases": <number>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "issue_resolution_time": {
       "value": <number (days) or "NOT_AVAILABLE">,
-      "sample_size": <number>,
+      "calculation": {
+        "population_size": <total closed issues in period>,
+        "sample_size": <number sampled>,
+        "sampling_method": "most recent closed in past 6 months",
+        "issues_examined": [
+          {"number": <issue_number>, "created_at": "<ISO-8601>", "closed_at": "<ISO-8601>", "days_to_close": <number>}
+        ],
+        "all_days_to_close": [<list of days for median calculation>],
+        "median_days": <calculated median>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "pr_merge_time": {
       "value": <number (days) or "NOT_AVAILABLE">,
-      "sample_size": <number>,
+      "calculation": {
+        "population_size": <total merged PRs in period>,
+        "sample_size": <number sampled>,
+        "sampling_method": "most recent merged in past 6 months",
+        "prs_examined": [
+          {"number": <pr_number>, "created_at": "<ISO-8601>", "merged_at": "<ISO-8601>", "days_to_merge": <number>}
+        ],
+        "all_days_to_merge": [<list of days for median calculation>],
+        "median_days": <calculated median>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "last_commit_recency": {
       "value": <number (days) or "NOT_AVAILABLE">,
-      "last_commit_date": "<ISO-8601 date>",
+      "calculation": {
+        "last_commit_date": "<ISO-8601 date>",
+        "evaluation_date": "<ISO-8601 date>",
+        "days_since": <number>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     }
@@ -220,6 +289,24 @@ METRICS TO COLLECT:
    - Command: gh api repos/{owner}/{repo}/git/refs/tags (check for signed tags)
    - Look for GPG signatures, Sigstore, or SLSA provenance
 
+WEBSEARCH VERIFICATION PROTOCOL (CRITICAL):
+
+For CVE and security audit claims discovered via WebSearch, you MUST verify at primary sources:
+
+1. CVE Claims:
+   - Search result claims a CVE exists → MUST verify at https://nvd.nist.gov/vuln/detail/{CVE-ID}
+   - Record: search_query, search_results_examined, nvd_verification_url, confirmed (boolean)
+   - If NVD verification fails, mark claim as "UNCONFIRMED"
+
+2. Security Audit Claims:
+   - Search result mentions audit → MUST locate actual audit report (PDF, webpage, or official announcement)
+   - Record: search_query, search_results_examined, primary_source_url, report_accessible (boolean)
+   - If actual report cannot be located, mark as "UNCONFIRMED"
+
+3. For ALL WebSearch-derived claims:
+   - Include in JSON: "websearch_verification": { "search_query": "...", "results_examined": N, "primary_confirmation_url": "...", "confirmed": boolean }
+   - NEVER report unconfirmed WebSearch claims as facts
+
 INSTRUCTIONS:
 - Use ONLY live data from gh CLI commands, WebSearch, or WebFetch
 - Do NOT estimate or assume any values
@@ -227,8 +314,11 @@ INSTRUCTIONS:
 - Include the exact source URL or command for each data point
 - Record the timestamp when each metric was collected
 - Security data may require elevated permissions - note access issues
+- Apply WEBSEARCH VERIFICATION PROTOCOL for all CVE/audit claims
 
 OUTPUT FORMAT (respond with ONLY this JSON, no other text):
+
+IMPORTANT: For WebSearch-derived claims (CVEs, audits), you MUST include verification data. Unconfirmed claims must be marked as such.
 
 {
   "repository": "{owner}/{repo}",
@@ -237,17 +327,34 @@ OUTPUT FORMAT (respond with ONLY this JSON, no other text):
   "metrics": {
     "security_policy": {
       "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_security_md": <boolean>,
-      "has_disclosure_process": <boolean>,
-      "has_response_timeline": <boolean>,
-      "has_pgp_key": <boolean>,
+      "checklist": {
+        "has_security_md": <boolean>,
+        "has_disclosure_process": <boolean>,
+        "has_response_timeline": <boolean>,
+        "has_pgp_key": <boolean>,
+        "has_bug_bounty_reference": <boolean>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "vulnerability_disclosure": {
       "value": <1-5 score or "NOT_AVAILABLE">,
       "has_security_advisories": <boolean>,
-      "known_cves": <number or "unknown">,
+      "cve_details": {
+        "known_cves": <number or "unknown">,
+        "cves_verified": [
+          {
+            "cve_id": "<CVE-YYYY-NNNNN>",
+            "websearch_verification": {
+              "search_query": "<query used>",
+              "results_examined": <number>,
+              "nvd_verification_url": "<https://nvd.nist.gov/vuln/detail/CVE-...>",
+              "confirmed": <boolean>
+            }
+          }
+        ],
+        "unconfirmed_cve_claims": <number>
+      },
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
@@ -263,10 +370,20 @@ OUTPUT FORMAT (respond with ONLY this JSON, no other text):
     "security_audit": {
       "value": <1-5 score or "NOT_AVAILABLE">,
       "has_public_audit": <boolean>,
-      "audit_date": "<date or null>",
-      "auditor": "<name or null>",
+      "audit_verification": {
+        "websearch_verification": {
+          "search_query": "<query used>",
+          "results_examined": <number>,
+          "primary_source_url": "<URL to actual audit report or announcement>",
+          "report_accessible": <boolean>,
+          "confirmed": <boolean>
+        },
+        "audit_date": "<date or null>",
+        "auditor": "<name or null>",
+        "audit_report_url": "<direct URL to report or null>"
+      },
       "source": "<URL or command>",
-      "notes": "<any relevant context>"
+      "notes": "Include 'UNCONFIRMED' if audit claim could not be verified at primary source"
     },
     "signed_releases": {
       "value": <1-5 score or "NOT_AVAILABLE">,
@@ -326,37 +443,60 @@ INSTRUCTIONS:
 
 OUTPUT FORMAT (respond with ONLY this JSON, no other text):
 
+IMPORTANT: Use boolean checklists for qualitative metrics. The score is calculated mechanically from checklist results - do not assign subjective scores.
+
 {
   "repository": "{owner}/{repo}",
   "category": "documentation",
   "collected_at": "ISO-8601 timestamp",
   "metrics": {
     "readme_completeness": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_description": <boolean>,
-      "has_installation": <boolean>,
-      "has_usage": <boolean>,
-      "has_contributing": <boolean>,
-      "has_license": <boolean>,
-      "has_badges": <boolean>,
-      "has_examples": <boolean>,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_description": {"present": <boolean>, "weight": 1.0},
+        "has_installation": {"present": <boolean>, "weight": 1.0},
+        "has_usage": {"present": <boolean>, "weight": 1.0},
+        "has_contributing_section": {"present": <boolean>, "weight": 1.0},
+        "has_license_section": {"present": <boolean>, "weight": 1.0},
+        "has_badges": {"present": <boolean>, "weight": 0.5},
+        "has_code_examples": {"present": <boolean>, "weight": 0.5},
+        "has_visuals": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 6.5,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "api_documentation": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_docs_site": {"present": <boolean>, "weight": 1.0},
+        "has_api_reference": {"present": <boolean>, "weight": 1.5},
+        "has_function_signatures": {"present": <boolean>, "weight": 1.0},
+        "has_parameter_descriptions": {"present": <boolean>, "weight": 1.0},
+        "has_return_value_docs": {"present": <boolean>, "weight": 1.0},
+        "has_examples_in_docs": {"present": <boolean>, "weight": 1.0},
+        "has_search_functionality": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 7.0,
       "docs_url": "<URL or null>",
       "docs_platform": "<ReadTheDocs|GitHub Pages|custom|none>",
-      "has_api_reference": <boolean>,
-      "has_examples": <boolean>,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "getting_started": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_quickstart": <boolean>,
-      "has_tutorials": <boolean>,
-      "has_working_examples": <boolean>,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_quickstart_section": {"present": <boolean>, "weight": 1.5},
+        "has_prerequisites_listed": {"present": <boolean>, "weight": 1.0},
+        "has_step_by_step_guide": {"present": <boolean>, "weight": 1.0},
+        "has_working_examples": {"present": <boolean>, "weight": 1.0},
+        "has_expected_output": {"present": <boolean>, "weight": 0.5},
+        "has_troubleshooting": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 5.5,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
@@ -365,16 +505,23 @@ OUTPUT FORMAT (respond with ONLY this JSON, no other text):
       "has_changelog": <boolean>,
       "format": "<keep-a-changelog|custom|none>",
       "last_entry_date": "<date or null>",
+      "entries_past_12_months": <number>,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "contributing_guide": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_contributing_md": <boolean>,
-      "has_setup_instructions": <boolean>,
-      "has_pr_process": <boolean>,
-      "has_code_style": <boolean>,
-      "has_coc_reference": <boolean>,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_contributing_md": {"present": <boolean>, "weight": 1.0},
+        "has_setup_instructions": {"present": <boolean>, "weight": 1.0},
+        "has_pr_process": {"present": <boolean>, "weight": 1.0},
+        "has_code_style_guide": {"present": <boolean>, "weight": 1.0},
+        "has_testing_instructions": {"present": <boolean>, "weight": 1.0},
+        "has_coc_reference": {"present": <boolean>, "weight": 0.5},
+        "has_issue_templates": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 6.0,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     }
@@ -532,50 +679,83 @@ INSTRUCTIONS:
 
 OUTPUT FORMAT (respond with ONLY this JSON, no other text):
 
+IMPORTANT: Use boolean checklists for qualitative metrics. The score is calculated mechanically from checklist results - do not assign subjective scores.
+
 {
   "repository": "{owner}/{repo}",
   "category": "code_quality",
   "collected_at": "ISO-8601 timestamp",
   "metrics": {
     "test_presence": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_test_directory": <boolean>,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_test_directory": {"present": <boolean>, "weight": 1.0},
+        "has_unit_tests": {"present": <boolean>, "weight": 1.5},
+        "has_integration_tests": {"present": <boolean>, "weight": 1.0},
+        "has_e2e_tests": {"present": <boolean>, "weight": 1.0},
+        "has_test_in_ci": {"present": <boolean>, "weight": 1.0},
+        "has_test_documentation": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 6.0,
       "test_frameworks_detected": ["<framework names>"],
-      "has_ci_tests": <boolean>,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "test_coverage": {
       "value": <percentage or "NOT_AVAILABLE">,
       "coverage_service": "<codecov|coveralls|none>",
+      "coverage_url": "<direct URL to coverage report>",
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "ci_cd_configuration": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
-      "has_ci": <boolean>,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_ci_config": {"present": <boolean>, "weight": 1.0},
+        "has_tests_in_ci": {"present": <boolean>, "weight": 1.5},
+        "has_linting_in_ci": {"present": <boolean>, "weight": 1.0},
+        "has_security_scans": {"present": <boolean>, "weight": 1.0},
+        "has_build_verification": {"present": <boolean>, "weight": 0.5},
+        "has_automated_releases": {"present": <boolean>, "weight": 1.0},
+        "has_multi_platform_testing": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 6.5,
       "ci_platform": "<GitHub Actions|Travis|CircleCI|other>",
-      "has_tests_in_ci": <boolean>,
-      "has_linting_in_ci": <boolean>,
-      "has_security_scans": <boolean>,
-      "has_automated_releases": <boolean>,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "code_review_practice": {
       "value": <percentage or "NOT_AVAILABLE">,
-      "prs_sampled": <number>,
-      "prs_with_reviews": <number>,
+      "calculation": {
+        "population_size": <total merged PRs>,
+        "sample_size": <number sampled>,
+        "sampling_method": "most recent merged",
+        "prs_examined": [
+          {"number": <pr_number>, "has_review": <boolean>, "review_count": <number>}
+        ],
+        "prs_with_reviews": <count>,
+        "review_rate_percent": <calculated value>
+      },
       "has_required_reviews": <boolean or "unknown">,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     },
     "linting_formatting": {
-      "value": <1-5 score or "NOT_AVAILABLE">,
+      "value": "CHECKLIST",
+      "checklist": {
+        "has_linter_config": {"present": <boolean>, "weight": 1.0},
+        "has_formatter_config": {"present": <boolean>, "weight": 1.0},
+        "has_precommit_hooks": {"present": <boolean>, "weight": 1.0},
+        "has_ci_lint_enforcement": {"present": <boolean>, "weight": 1.0},
+        "has_editorconfig": {"present": <boolean>, "weight": 0.5},
+        "has_type_checking": {"present": <boolean>, "weight": 0.5}
+      },
+      "checklist_score": <sum of weights for present items>,
+      "max_possible_score": 5.0,
       "linting_tools": ["<tool names>"],
       "formatting_tools": ["<tool names>"],
-      "has_precommit": <boolean>,
-      "has_ci_enforcement": <boolean>,
       "source": "<URL or command>",
       "notes": "<any relevant context>"
     }

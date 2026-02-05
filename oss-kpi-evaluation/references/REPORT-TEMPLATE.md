@@ -105,28 +105,36 @@ Each category follows the same format.
 ### {Category Name}
 
 **Category Score**: X.X/5.0 ({rating})
+**Category Confidence**: {High|Medium|Low|Very Low}
 
 #### Metrics
 
-| Metric | Value | Score | Threshold Met |
-|--------|-------|-------|---------------|
-| {metric_name} | {value} | X/5 | {threshold description} |
-| {metric_name} | {value} | X/5 | {threshold description} |
-| ... | ... | ... | ... |
+| Metric | Value | Score | Confidence | Notes |
+|--------|-------|-------|------------|-------|
+| {metric_name} | {value} | X/5 | {High|Med|Low} | {threshold met, verification status} |
+| {metric_name} | {value} | X/5 | {High|Med|Low} | {threshold met, verification status} |
+| ... | ... | ... | ... | ... |
+
+**Confidence Indicators**:
+- 🟢 High: Verified from authoritative source, cross-validated
+- 🟡 Medium: Single authoritative source, not cross-validated
+- 🟠 Low: Secondary source or small sample size
+- 🔴 Very Low: Unverified or data quality issues
 
 #### Evidence Table
 
-| Metric | Source | Retrieved |
-|--------|--------|-----------|
-| {metric_name} | [{source_type}]({url}) | {timestamp} |
-| {metric_name} | [{source_type}]({url}) | {timestamp} |
-| ... | ... | ... |
+| Metric | Source | Authority | Retrieved | Verified |
+|--------|--------|-----------|-----------|----------|
+| {metric_name} | [{source_type}]({url}) | L1-L5 | {timestamp} | ✓/✗ |
+| {metric_name} | [{source_type}]({url}) | L1-L5 | {timestamp} | ✓/✗ |
+| ... | ... | ... | ... | ... |
 
 #### Observations
 
 - {Factual observation about metric 1}
 - {Factual observation about metric 2}
 - {Note about any NOT_AVAILABLE metrics}
+- {Note about any UNVERIFIED metrics}
 ```
 
 **Example - Community Health**:
@@ -134,33 +142,35 @@ Each category follows the same format.
 ### Community Health
 
 **Category Score**: 4.2/5.0 (Good)
+**Category Confidence**: High
 
 #### Metrics
 
-| Metric | Value | Score | Threshold Met |
-|--------|-------|-------|---------------|
-| Contributor Count | 127 | 5/5 | ≥100 contributors |
-| Contributor Growth | +18% | 4/5 | 10-24% growth |
-| Bus Factor | 4 | 4/5 | 4 people |
-| Issue Engagement | 78% | 4/5 | 75-89% response rate |
-| PR Engagement | 82% | 4/5 | 75-89% review rate |
+| Metric | Value | Score | Confidence | Notes |
+|--------|-------|-------|------------|-------|
+| Contributor Count | 127 | 5/5 | 🟢 High | ≥100 contributors; verified |
+| Contributor Growth | +18% | 4/5 | 🟢 High | 10-24% growth; calculation verified |
+| Bus Factor | 4 | 4/5 | 🟢 High | 4 contributors for 50%; intermediate data verified |
+| Issue Engagement | 78% | 4/5 | 🟡 Medium | 75-89% response rate; sample=50/342 |
+| PR Engagement | 82% | 4/5 | 🟡 Medium | 75-89% review rate; sample=50/289 |
 
 #### Evidence Table
 
-| Metric | Source | Retrieved |
-|--------|--------|-----------|
-| Contributor Count | [GitHub API](https://api.github.com/repos/owner/repo/contributors) | 2024-01-15T10:30:00Z |
-| Contributor Growth | [GitHub Insights](https://github.com/owner/repo/graphs/contributors) | 2024-01-15T10:31:00Z |
-| Bus Factor | [GitHub API](https://api.github.com/repos/owner/repo/stats/contributors) | 2024-01-15T10:30:00Z |
-| Issue Engagement | [gh issue list](gh issue list --state closed --limit 50) | 2024-01-15T10:32:00Z |
-| PR Engagement | [gh pr list](gh pr list --state merged --limit 50) | 2024-01-15T10:33:00Z |
+| Metric | Source | Authority | Retrieved | Verified |
+|--------|--------|-----------|-----------|----------|
+| Contributor Count | [GitHub API](https://api.github.com/repos/owner/repo/contributors) | L1 | 2024-01-15T10:30:00Z | ✓ |
+| Contributor Growth | [GitHub API](https://api.github.com/repos/owner/repo/stats/contributors) | L1 | 2024-01-15T10:31:00Z | ✓ |
+| Bus Factor | [GitHub API](https://api.github.com/repos/owner/repo/stats/contributors) | L1 | 2024-01-15T10:30:00Z | ✓ |
+| Issue Engagement | [gh issue list](gh issue list --state closed --limit 50) | L1 | 2024-01-15T10:32:00Z | - |
+| PR Engagement | [gh pr list](gh pr list --state merged --limit 50) | L1 | 2024-01-15T10:33:00Z | - |
 
 #### Observations
 
-- 127 unique contributors active in the past 12 months
+- 127 unique contributors active in the past 12 months (verified: 127)
 - Top 4 contributors account for 50% of commits (bus factor = 4)
-- 78% of issues receive maintainer response within 7 days (sample: 50 issues)
-- 82% of PRs receive review within 7 days (sample: 50 PRs)
+  - Calculation: user1 (312 commits, 36.8%), user2 (198, 60.2%), user3 (95, 71.4%), user4 (78, 80.6%)
+- 78% of issues receive maintainer response within 7 days (sample: 50/342 issues, stratified by month)
+- 82% of PRs receive review within 7 days (sample: 50/289 PRs)
 ```
 
 ---
@@ -233,20 +243,30 @@ If no discrepancies: "No discrepancies exceeding 10% variance were detected."
 
 ### Confidence Assessment
 
-| Category | Data Quality | Confidence |
-|----------|--------------|------------|
-| Community Health | {X}/5 metrics | {High/Medium/Low} |
-| Maintenance | {X}/5 metrics | {High/Medium/Low} |
-| Security | {X}/5 metrics | {High/Medium/Low} |
-| Documentation | {X}/5 metrics | {High/Medium/Low} |
-| Adoption | {X}/5 metrics | {High/Medium/Low} |
-| Code Quality | {X}/5 metrics | {High/Medium/Low} |
+| Category | Metrics Available | Verified | Sample Quality | Overall Confidence |
+|----------|-------------------|----------|----------------|-------------------|
+| Community Health | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
+| Maintenance | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
+| Security | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
+| Documentation | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
+| Adoption | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
+| Code Quality | {X}/5 | {X}/5 | {Good/Fair/Poor} | {High/Medium/Low/Very Low} |
 ```
 
+**Confidence Calculation**:
+
+Overall Confidence = weighted average of:
+- Source Verified (30%): Metric re-fetched and matched within 5%
+- Sample Quality (25%): Sample size meets minimum requirements
+- Data Freshness (20%): Data collected within 5 minutes
+- Cross-Validated (15%): Confirmed by secondary source
+- Bounds Valid (10%): Passes semantic consistency rules
+
 **Confidence Levels**:
-- **High**: All 5 metrics collected with verified sources
-- **Medium**: 3-4 metrics collected, remaining unavailable with documented reasons
-- **Low**: <3 metrics collected, limited data for category scoring
+- 🟢 **High** (0.8-1.0): All metrics verified, good sample quality, cross-validated
+- 🟡 **Medium** (0.6-0.79): Most metrics verified, adequate samples
+- 🟠 **Low** (0.4-0.59): Some verification issues or small samples
+- 🔴 **Very Low** (<0.4): Significant data quality concerns, use with caution
 
 ---
 
@@ -334,7 +354,7 @@ For programmatic consumption, the report can also be output as JSON.
 
 ```json
 {
-  "report_version": "1.0",
+  "report_version": "2.0",
   "repository": {
     "owner": "string",
     "repo": "string",
@@ -344,8 +364,11 @@ For programmatic consumption, the report can also be output as JSON.
   "overall_score": {
     "value": 0.0,
     "rating": "string",
+    "confidence": "High|Medium|Low|Very Low",
+    "confidence_score": 0.0,
     "metrics_available": 0,
-    "metrics_total": 30
+    "metrics_total": 30,
+    "metrics_verified": 0
   },
   "category_scores": {
     "community_health": {
@@ -353,7 +376,18 @@ For programmatic consumption, the report can also be output as JSON.
       "rating": "string",
       "weight": 0.1667,
       "metrics_available": 0,
-      "metrics_total": 5
+      "metrics_total": 5,
+      "confidence": {
+        "rating": "High|Medium|Low|Very Low",
+        "score": 0.0,
+        "factors": {
+          "source_verified": 0.0,
+          "sample_quality": 0.0,
+          "data_freshness": 0.0,
+          "cross_validated": 0.0,
+          "bounds_valid": 0.0
+        }
+      }
     }
     // ... other categories
   },
@@ -364,26 +398,93 @@ For programmatic consumption, the report can also be output as JSON.
           "value": 0,
           "score": 0,
           "threshold": "string",
+          "confidence": {
+            "rating": "High|Medium|Low|Very Low",
+            "score": 0.0,
+            "verified": true,
+            "verification_details": {
+              "subagent_value": 0,
+              "verified_value": 0,
+              "variance_percent": 0.0,
+              "status": "VERIFIED|UNVERIFIED"
+            }
+          },
           "source": "string",
+          "source_authority": "L1|L2|L3|L4|L5",
+          "retrieved_at": "ISO-8601"
+        },
+        "bus_factor": {
+          "value": 0,
+          "score": 0,
+          "threshold": "string",
+          "confidence": {
+            "rating": "High|Medium|Low|Very Low",
+            "score": 0.0,
+            "calculation_verified": true
+          },
+          "calculation": {
+            "total_commits_12_months": 0,
+            "contributor_distribution": [
+              {"contributor": "string", "commits": 0, "percent": 0.0, "cumulative_percent": 0.0}
+            ],
+            "threshold_50_percent_reached_at": 0
+          },
+          "source": "string",
+          "source_authority": "L1",
           "retrieved_at": "ISO-8601"
         }
-        // ... other metrics
+        // ... other metrics with their calculation/checklist details
       },
       "observations": ["string"]
     }
     // ... other categories
   },
+  "source_verification": {
+    "high_priority_metrics": [
+      {
+        "metric": "star_count",
+        "subagent_value": 0,
+        "verified_value": 0,
+        "variance_percent": 0.0,
+        "status": "VERIFIED|UNVERIFIED",
+        "verified_at": "ISO-8601"
+      }
+    ],
+    "verification_summary": {
+      "total_verified": 0,
+      "passed": 0,
+      "failed": 0
+    }
+  },
   "cross_validation": {
     "verified": [],
-    "discrepancies": []
+    "discrepancies": [],
+    "semantic_consistency": {
+      "rules_evaluated": ["R1", "R2", "R3", "R4", "R5", "R6"],
+      "rules_passed": [],
+      "rules_failed": [],
+      "flags": []
+    },
+    "bounds_validation": {
+      "checks_performed": 0,
+      "checks_passed": 0,
+      "violations": []
+    }
   },
   "data_quality": {
     "total_metrics": 30,
     "collected": 0,
     "unavailable": 0,
+    "verified": 0,
+    "unverified": 0,
     "missing_data": [],
     "stale_warnings": [],
-    "access_issues": []
+    "access_issues": [],
+    "sample_quality": {
+      "adequate_samples": 0,
+      "small_samples": 0,
+      "very_small_samples": 0
+    }
   },
   "sources": {
     "github_api": [],
