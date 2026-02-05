@@ -1,0 +1,475 @@
+{
+  "version": "1.0",
+  "description": "Machine-readable scoring criteria for OSS KPI evaluation",
+  "scoring_scale": {
+    "min": 1,
+    "max": 5,
+    "ratings": {
+      "5": "Excellent",
+      "4": "Good",
+      "3": "Adequate",
+      "2": "Concerning",
+      "1": "Critical"
+    }
+  },
+  "overall_interpretation": {
+    "4.5-5.0": {
+      "rating": "Excellent",
+      "description": "Low risk, high quality project"
+    },
+    "3.5-4.4": {
+      "rating": "Good",
+      "description": "Healthy project with minor areas for improvement"
+    },
+    "2.5-3.4": {
+      "rating": "Adequate",
+      "description": "Acceptable but review identified areas carefully"
+    },
+    "1.5-2.4": {
+      "rating": "Concerning",
+      "description": "Significant risks, proceed with caution"
+    },
+    "1.0-1.4": {
+      "rating": "Critical",
+      "description": "Major issues, high risk adoption"
+    }
+  },
+  "default_weights": {
+    "community_health": 0.1667,
+    "maintenance": 0.1667,
+    "security": 0.1667,
+    "documentation": 0.1667,
+    "adoption": 0.1667,
+    "code_quality": 0.1667
+  },
+  "categories": {
+    "community_health": {
+      "name": "Community Health",
+      "description": "Measures the contributor community's size, diversity, and engagement",
+      "metrics": {
+        "contributor_count": {
+          "name": "Contributor Count",
+          "description": "Total unique contributors with merged commits in past 12 months",
+          "type": "numeric",
+          "unit": "contributors",
+          "thresholds": {
+            "5": { "min": 100, "description": "≥100 contributors" },
+            "4": { "min": 50, "max": 99, "description": "50-99 contributors" },
+            "3": { "min": 20, "max": 49, "description": "20-49 contributors" },
+            "2": { "min": 5, "max": 19, "description": "5-19 contributors" },
+            "1": { "max": 4, "description": "<5 contributors" }
+          }
+        },
+        "contributor_growth": {
+          "name": "Contributor Growth Rate",
+          "description": "Percentage change in active contributors vs previous 12 months",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 25, "description": "≥25% growth" },
+            "4": { "min": 10, "max": 24, "description": "10-24% growth" },
+            "3": { "min": 0, "max": 9, "description": "0-9% growth" },
+            "2": { "min": -10, "max": -1, "description": "-10% to -1% decline" },
+            "1": { "max": -11, "description": "<-10% decline" }
+          }
+        },
+        "bus_factor": {
+          "name": "Bus Factor",
+          "description": "Minimum contributors accounting for 50% of commits",
+          "type": "numeric",
+          "unit": "people",
+          "thresholds": {
+            "5": { "min": 5, "description": "≥5 people" },
+            "4": { "exact": 4, "description": "4 people" },
+            "3": { "exact": 3, "description": "3 people" },
+            "2": { "exact": 2, "description": "2 people" },
+            "1": { "exact": 1, "description": "1 person" }
+          }
+        },
+        "issue_engagement": {
+          "name": "Issue Engagement",
+          "description": "Percentage of issues receiving maintainer response within 7 days",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 90, "description": "≥90% response rate" },
+            "4": { "min": 75, "max": 89, "description": "75-89% response rate" },
+            "3": { "min": 50, "max": 74, "description": "50-74% response rate" },
+            "2": { "min": 25, "max": 49, "description": "25-49% response rate" },
+            "1": { "max": 24, "description": "<25% response rate" }
+          }
+        },
+        "pr_engagement": {
+          "name": "PR Engagement",
+          "description": "Percentage of PRs receiving review within 7 days",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 90, "description": "≥90% review rate" },
+            "4": { "min": 75, "max": 89, "description": "75-89% review rate" },
+            "3": { "min": 50, "max": 74, "description": "50-74% review rate" },
+            "2": { "min": 25, "max": 49, "description": "25-49% review rate" },
+            "1": { "max": 24, "description": "<25% review rate" }
+          }
+        }
+      }
+    },
+    "maintenance": {
+      "name": "Maintenance",
+      "description": "Measures ongoing project maintenance activity",
+      "metrics": {
+        "commit_frequency": {
+          "name": "Commit Frequency",
+          "description": "Average commits per week over past 12 months",
+          "type": "numeric",
+          "unit": "commits/week",
+          "thresholds": {
+            "5": { "min": 20, "description": "≥20 commits/week" },
+            "4": { "min": 10, "max": 19, "description": "10-19 commits/week" },
+            "3": { "min": 3, "max": 9, "description": "3-9 commits/week" },
+            "2": { "min": 1, "max": 2, "description": "1-2 commits/week" },
+            "1": { "max": 0.99, "description": "<1 commit/week" }
+          }
+        },
+        "release_cadence": {
+          "name": "Release Cadence",
+          "description": "Number of releases in past 12 months",
+          "type": "numeric",
+          "unit": "releases",
+          "thresholds": {
+            "5": { "min": 12, "description": "≥12 releases (monthly+)" },
+            "4": { "min": 6, "max": 11, "description": "6-11 releases" },
+            "3": { "min": 3, "max": 5, "description": "3-5 releases" },
+            "2": { "min": 1, "max": 2, "description": "1-2 releases" },
+            "1": { "exact": 0, "description": "0 releases" }
+          }
+        },
+        "issue_resolution_time": {
+          "name": "Issue Resolution Time",
+          "description": "Median days to close issues (past 6 months)",
+          "type": "numeric",
+          "unit": "days",
+          "inverse": true,
+          "thresholds": {
+            "5": { "max": 7, "description": "≤7 days median" },
+            "4": { "min": 8, "max": 14, "description": "8-14 days median" },
+            "3": { "min": 15, "max": 30, "description": "15-30 days median" },
+            "2": { "min": 31, "max": 90, "description": "31-90 days median" },
+            "1": { "min": 91, "description": ">90 days median" }
+          }
+        },
+        "pr_merge_time": {
+          "name": "PR Merge Time",
+          "description": "Median days to merge PRs (past 6 months)",
+          "type": "numeric",
+          "unit": "days",
+          "inverse": true,
+          "thresholds": {
+            "5": { "max": 3, "description": "≤3 days median" },
+            "4": { "min": 4, "max": 7, "description": "4-7 days median" },
+            "3": { "min": 8, "max": 14, "description": "8-14 days median" },
+            "2": { "min": 15, "max": 30, "description": "15-30 days median" },
+            "1": { "min": 31, "description": ">30 days median" }
+          }
+        },
+        "last_commit_recency": {
+          "name": "Last Commit Recency",
+          "description": "Days since most recent commit to default branch",
+          "type": "numeric",
+          "unit": "days",
+          "inverse": true,
+          "thresholds": {
+            "5": { "max": 7, "description": "≤7 days ago" },
+            "4": { "min": 8, "max": 30, "description": "8-30 days ago" },
+            "3": { "min": 31, "max": 90, "description": "31-90 days ago" },
+            "2": { "min": 91, "max": 180, "description": "91-180 days ago" },
+            "1": { "min": 181, "description": ">180 days ago" }
+          }
+        }
+      }
+    },
+    "security": {
+      "name": "Security",
+      "description": "Measures security posture and practices",
+      "metrics": {
+        "security_policy": {
+          "name": "Security Policy",
+          "description": "Presence and completeness of SECURITY.md",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Comprehensive policy with disclosure process, SLA, and PGP key" },
+            "4": { "criteria": "Policy with disclosure process and response timeline" },
+            "3": { "criteria": "Basic SECURITY.md with reporting instructions" },
+            "2": { "criteria": "Security info in README only" },
+            "1": { "criteria": "No security documentation" }
+          }
+        },
+        "vulnerability_disclosure": {
+          "name": "Vulnerability Disclosure",
+          "description": "Evidence of responsible vulnerability handling",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Active advisory usage, published CVEs with fixes, coordinated disclosure" },
+            "4": { "criteria": "Security advisories enabled, some historical CVE responses" },
+            "3": { "criteria": "Ad-hoc security issue handling via issues" },
+            "2": { "criteria": "Slow or incomplete vulnerability responses" },
+            "1": { "criteria": "No evidence of security issue handling" }
+          }
+        },
+        "dependency_status": {
+          "name": "Dependency Status",
+          "description": "Open dependency vulnerability alerts",
+          "type": "numeric",
+          "unit": "alerts",
+          "inverse": true,
+          "thresholds": {
+            "5": { "exact": 0, "criteria": "0 open alerts, Dependabot enabled" },
+            "4": { "min": 1, "max": 2, "criteria": "1-2 low-severity open alerts" },
+            "3": { "min": 3, "max": 5, "criteria": "3-5 open alerts or 1 high-severity" },
+            "2": { "min": 6, "max": 10, "criteria": "6-10 open alerts or 2+ high-severity" },
+            "1": { "min": 11, "criteria": ">10 open alerts or critical vulnerabilities" }
+          }
+        },
+        "security_audit": {
+          "name": "Security Audit",
+          "description": "Evidence of third-party security audits",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Recent (<2 years) public audit with issues resolved" },
+            "4": { "criteria": "Public audit >2 years old or partial audit recent" },
+            "3": { "criteria": "Internal security review documented" },
+            "2": { "criteria": "Security practices mentioned but no formal audit" },
+            "1": { "criteria": "No evidence of security audits" }
+          }
+        },
+        "signed_releases": {
+          "name": "Signed Releases",
+          "description": "Cryptographic signing of releases or commits",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "All releases signed, SLSA provenance, reproducible builds" },
+            "4": { "criteria": "All releases signed with GPG/Sigstore" },
+            "3": { "criteria": "Some releases signed or signed commits" },
+            "2": { "criteria": "Unsigned releases but checksums provided" },
+            "1": { "criteria": "No signing or integrity verification" }
+          }
+        }
+      }
+    },
+    "documentation": {
+      "name": "Documentation",
+      "description": "Measures documentation quality and completeness",
+      "metrics": {
+        "readme_completeness": {
+          "name": "README Completeness",
+          "description": "Presence of key README sections",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "All sections + badges + examples + screenshots/diagrams" },
+            "4": { "criteria": "All 5 core sections present and detailed" },
+            "3": { "criteria": "4 of 5 core sections present" },
+            "2": { "criteria": "2-3 core sections present" },
+            "1": { "criteria": "Minimal or no README" }
+          }
+        },
+        "api_documentation": {
+          "name": "API Documentation",
+          "description": "Presence and quality of API/library documentation",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Comprehensive API docs with search, examples, versioning" },
+            "4": { "criteria": "Complete API reference with examples" },
+            "3": { "criteria": "Partial API documentation" },
+            "2": { "criteria": "Inline code comments only" },
+            "1": { "criteria": "No API documentation" }
+          }
+        },
+        "getting_started": {
+          "name": "Getting Started Guide",
+          "description": "Presence of beginner-friendly onboarding documentation",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Multiple tutorials, video content, interactive examples" },
+            "4": { "criteria": "Comprehensive getting started with working examples" },
+            "3": { "criteria": "Basic getting started section in README" },
+            "2": { "criteria": "Installation instructions only" },
+            "1": { "criteria": "No getting started content" }
+          }
+        },
+        "changelog": {
+          "name": "Changelog Maintenance",
+          "description": "Presence and maintenance of changelog",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Keep-a-Changelog format, up to date, all versions documented" },
+            "4": { "criteria": "Regular changelog updates with recent releases" },
+            "3": { "criteria": "Changelog exists but inconsistently maintained" },
+            "2": { "criteria": "Release notes only (no consolidated changelog)" },
+            "1": { "criteria": "No changelog" }
+          }
+        },
+        "contributing_guide": {
+          "name": "Contributing Guide",
+          "description": "Presence and quality of contribution guidelines",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Comprehensive guide: setup, testing, style, review process, CoC" },
+            "4": { "criteria": "Complete guide with development setup and PR process" },
+            "3": { "criteria": "Basic CONTRIBUTING.md with PR instructions" },
+            "2": { "criteria": "Contributing info in README only" },
+            "1": { "criteria": "No contributing guidelines" }
+          }
+        }
+      }
+    },
+    "adoption": {
+      "name": "Adoption",
+      "description": "Measures project adoption and usage trends",
+      "metrics": {
+        "star_count": {
+          "name": "Star Count",
+          "description": "Total GitHub stars",
+          "type": "numeric",
+          "unit": "stars",
+          "thresholds": {
+            "5": { "min": 10000, "description": "≥10,000 stars" },
+            "4": { "min": 1000, "max": 9999, "description": "1,000-9,999 stars" },
+            "3": { "min": 100, "max": 999, "description": "100-999 stars" },
+            "2": { "min": 10, "max": 99, "description": "10-99 stars" },
+            "1": { "max": 9, "description": "<10 stars" }
+          }
+        },
+        "star_trend": {
+          "name": "Star Trend",
+          "description": "Star growth rate over past 6 months",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 50, "description": "≥50% growth" },
+            "4": { "min": 20, "max": 49, "description": "20-49% growth" },
+            "3": { "min": 5, "max": 19, "description": "5-19% growth" },
+            "2": { "min": 0, "max": 4, "description": "0-4% growth (stagnant)" },
+            "1": { "max": -1, "description": "Negative growth" }
+          }
+        },
+        "fork_activity": {
+          "name": "Fork Activity",
+          "description": "Percentage of forks with recent activity",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 20, "description": "≥20% active forks" },
+            "4": { "min": 10, "max": 19, "description": "10-19% active forks" },
+            "3": { "min": 5, "max": 9, "description": "5-9% active forks" },
+            "2": { "min": 1, "max": 4, "description": "1-4% active forks" },
+            "1": { "max": 0.99, "description": "<1% active forks" }
+          }
+        },
+        "download_count": {
+          "name": "Download/Install Count",
+          "description": "Monthly downloads from primary package registry",
+          "type": "numeric",
+          "unit": "downloads/month",
+          "thresholds": {
+            "5": { "min": 1000000, "description": "≥1M monthly downloads" },
+            "4": { "min": 100000, "max": 999999, "description": "100K-999K monthly" },
+            "3": { "min": 10000, "max": 99999, "description": "10K-99K monthly" },
+            "2": { "min": 1000, "max": 9999, "description": "1K-9K monthly" },
+            "1": { "max": 999, "description": "<1K monthly" }
+          }
+        },
+        "dependent_projects": {
+          "name": "Dependent Projects",
+          "description": "Count of public projects depending on this package",
+          "type": "numeric",
+          "unit": "dependents",
+          "thresholds": {
+            "5": { "min": 10000, "description": "≥10,000 dependents" },
+            "4": { "min": 1000, "max": 9999, "description": "1,000-9,999 dependents" },
+            "3": { "min": 100, "max": 999, "description": "100-999 dependents" },
+            "2": { "min": 10, "max": 99, "description": "10-99 dependents" },
+            "1": { "max": 9, "description": "<10 dependents" }
+          }
+        }
+      }
+    },
+    "code_quality": {
+      "name": "Code Quality",
+      "description": "Measures code quality practices and metrics",
+      "metrics": {
+        "test_presence": {
+          "name": "Test Presence",
+          "description": "Evidence of automated tests in the repository",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Comprehensive test suite: unit, integration, e2e" },
+            "4": { "criteria": "Good test coverage with multiple test types" },
+            "3": { "criteria": "Basic test suite present" },
+            "2": { "criteria": "Minimal tests or examples only" },
+            "1": { "criteria": "No tests" }
+          }
+        },
+        "test_coverage": {
+          "name": "Test Coverage",
+          "description": "Code coverage percentage",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 90, "description": "≥90% coverage" },
+            "4": { "min": 70, "max": 89, "description": "70-89% coverage" },
+            "3": { "min": 50, "max": 69, "description": "50-69% coverage" },
+            "2": { "min": 20, "max": 49, "description": "20-49% coverage" },
+            "1": { "max": 19, "description": "<20% or unknown" }
+          }
+        },
+        "ci_cd_configuration": {
+          "name": "CI/CD Configuration",
+          "description": "Presence and completeness of CI/CD automation",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Full CI/CD: tests, linting, security scans, automated releases" },
+            "4": { "criteria": "CI with tests, linting, and build verification" },
+            "3": { "criteria": "Basic CI with test runs" },
+            "2": { "criteria": "CI present but minimal checks" },
+            "1": { "criteria": "No CI/CD" }
+          }
+        },
+        "code_review_practice": {
+          "name": "Code Review Practice",
+          "description": "Evidence of code review in PR history",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 95, "criteria": "≥95% PRs reviewed, required reviews enforced" },
+            "4": { "min": 80, "max": 94, "description": "≥80% PRs reviewed" },
+            "3": { "min": 50, "max": 79, "description": "≥50% PRs reviewed" },
+            "2": { "max": 49, "description": "<50% PRs reviewed" },
+            "1": { "criteria": "No code review practice" }
+          }
+        },
+        "linting_formatting": {
+          "name": "Linting and Formatting",
+          "description": "Presence of code quality tooling",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Linting + formatting + pre-commit hooks + CI enforcement" },
+            "4": { "criteria": "Linting and formatting with CI enforcement" },
+            "3": { "criteria": "Linting configuration present" },
+            "2": { "criteria": "EditorConfig or basic formatting only" },
+            "1": { "criteria": "No linting or formatting configuration" }
+          }
+        }
+      }
+    }
+  },
+  "calculation": {
+    "metric_score": "Apply threshold rules to raw value",
+    "category_score": "Average of available metric scores (exclude NOT_AVAILABLE)",
+    "overall_score": "Weighted average of category scores"
+  },
+  "not_available_handling": {
+    "metric": "Exclude from category average",
+    "category": "If <3 metrics available, mark category as 'Low Confidence'",
+    "overall": "Adjust weight distribution among available categories"
+  }
+}
