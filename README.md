@@ -31,6 +31,14 @@ Install directly from the Claude Code CLI:
 claude /plugin add admiller/skill-oss-project-kpi-evaluation
 ```
 
+### From GitHub URL
+
+Install directly from the GitHub repository:
+
+```bash
+claude /plugin add https://github.com/admiller/skill-oss-project-kpi-evaluation
+```
+
 ### Manual Installation
 
 1. Clone the repository:
