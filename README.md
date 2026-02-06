@@ -23,32 +23,32 @@ A Claude Code skill that evaluates open source projects against Key Performance 
 
 ## Installation
 
-### Using Claude Code Plugin Marketplace
+### From GitHub Repository
 
-Install directly from the Claude Code CLI:
-
-```bash
-claude /plugin add admiller/skill-oss-project-kpi-evaluation
-```
-
-### From GitHub URL
-
-Install directly from the GitHub repository:
+Add the marketplace and install the plugin:
 
 ```bash
-claude /plugin add https://github.com/admiller/skill-oss-project-kpi-evaluation
+/plugin marketplace add admiller/skill-oss-project-kpi-evaluation
+/plugin install oss-kpi-evaluation@admiller-skill-oss-project-kpi-evaluation
 ```
 
-### Manual Installation
+Or use the interactive plugin manager:
+
+```bash
+/plugin
+```
+
+### From Local Clone
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/admiller/skill-oss-project-kpi-evaluation.git
    ```
 
-2. Add the skill to your Claude Code configuration:
+2. Add as a local marketplace and install:
    ```bash
-   claude /plugin add ./skill-oss-project-kpi-evaluation
+   /plugin marketplace add ./skill-oss-project-kpi-evaluation
+   /plugin install oss-kpi-evaluation@skill-oss-project-kpi-evaluation
    ```
 
 ## Requirements
