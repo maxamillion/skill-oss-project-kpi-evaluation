@@ -57,7 +57,7 @@ The evaluation follows six phases with strict quality controls.
 If Red Hat Engagement analysis is requested, verify prerequisites before dispatch:
 
 - [ ] Verify Kerberos ticket: `klist` — must show a valid TGT
-- [ ] Test LDAP connectivity: `ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid`
+- [ ] Test LDAP connectivity: `ldapsearch -x -H ldap://ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid`
 - [ ] If both checks pass: Set `ldap_available=true` for the RH subagent
 - [ ] If either check fails: Set `ldap_available=false` — RH subagent will use email-only fallback with reduced confidence
 - [ ] Log prerequisite check results for inclusion in the report

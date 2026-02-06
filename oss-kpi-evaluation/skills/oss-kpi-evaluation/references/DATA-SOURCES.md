@@ -458,7 +458,7 @@ These sources are only used when the Red Hat Engagement category is explicitly r
 | Requirement | Verification | Failure Mode |
 |-------------|-------------|--------------|
 | Kerberos ticket | `klist` — must show valid TGT | All RH metrics → NOT_AVAILABLE |
-| LDAP connectivity | `ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid` | All RH metrics → NOT_AVAILABLE |
+| LDAP connectivity | `ldapsearch -x -H ldap://ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid` | All RH metrics → NOT_AVAILABLE |
 | VPN / internal network | Implicit via LDAP connectivity test | All RH metrics → NOT_AVAILABLE |
 
 ### LDAP Org Traversal
@@ -467,12 +467,12 @@ Enumerate AI Engineering org members starting from Steven Huels (`shuels`):
 
 ```bash
 # Step 1: Find direct reports of shuels
-ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+ldapsearch -LLL -x -H ldap://ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
   '(manager=uid=shuels,ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
 
 # Step 2: Recursively find reports for each manager discovered
 # For each uid returned that has direct reports, repeat the query:
-ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+ldapsearch -LLL -x -H ldap://ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
   '(manager=uid={manager_uid},ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
 
 # Continue until no new reports are found (leaf employees)

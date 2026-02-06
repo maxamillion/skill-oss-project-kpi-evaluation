@@ -781,11 +781,11 @@ Step 1: Enumerate AI Engineering Org via LDAP (if ldap_available=true)
 
 Recursively traverse the org tree starting from shuels (Steven Huels):
 
-  ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+  ldapsearch -LLL -x -H ldap://ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
     '(manager=uid=shuels,ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
 
   For each uid returned that has direct reports, query again:
-  ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+  ldapsearch -LLL -x -H ldap://ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
     '(manager=uid={uid},ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
 
   Continue recursively until no new reports are found.
