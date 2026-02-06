@@ -131,7 +131,7 @@ The skill generates a structured report containing:
 
 ## Documentation
 
-Detailed documentation is available in the `oss-kpi-evaluation/references/` directory:
+Detailed documentation is available in the `oss-kpi-evaluation/skills/oss-kpi-evaluation/references/` directory:
 
 | Document | Description |
 |----------|-------------|

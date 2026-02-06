@@ -12,15 +12,19 @@ The skill uses a **multi-agent architecture** with 6 independent research subage
 
 ```
 oss-kpi-evaluation/
-├── SKILL.md              # Main skill definition (entry point)
-├── assets/
-│   └── scoring-rubric.json   # Machine-readable scoring thresholds
-└── references/
-    ├── KPI-FRAMEWORK.md      # Complete metric definitions
-    ├── DATA-SOURCES.md       # API endpoints and data collection methods
-    ├── RESEARCH-PROMPTS.md   # Subagent prompt templates (use verbatim)
-    ├── BIAS-PREVENTION.md    # Quality control protocols
-    └── REPORT-TEMPLATE.md    # Output format specification
+├── .claude-plugin/
+│   └── plugin.json           # Plugin manifest
+└── skills/
+    └── oss-kpi-evaluation/
+        ├── SKILL.md              # Main skill definition (entry point)
+        ├── assets/
+        │   └── scoring-rubric.json   # Machine-readable scoring thresholds
+        └── references/
+            ├── KPI-FRAMEWORK.md      # Complete metric definitions
+            ├── DATA-SOURCES.md       # API endpoints and data collection methods
+            ├── RESEARCH-PROMPTS.md   # Subagent prompt templates (use verbatim)
+            ├── BIAS-PREVENTION.md    # Quality control protocols
+            └── REPORT-TEMPLATE.md    # Output format specification
 ```
 
 ## Architecture
