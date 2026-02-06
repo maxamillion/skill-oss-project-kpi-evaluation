@@ -6,14 +6,14 @@ compatibility: Requires internet access for web research. Designed for Claude Co
 metadata:
   author: admiller
   version: "1.0"
-allowed-tools: WebSearch WebFetch Read Glob Grep Bash(gh:*) Task
+allowed-tools: WebSearch WebFetch Read Glob Grep Bash(gh:*) Bash(ldapsearch:*) Bash(klist:*) Bash(git log:*) Task
 ---
 
 # OSS KPI Evaluation Agent Skill
 
 ## Purpose and Scope
 
-This skill evaluates open source projects against six Key Performance Indicator (KPI) categories using multi-agent research with built-in bias prevention. It performs live web research to gather current, verifiable metrics.
+This skill evaluates open source projects against six Key Performance Indicator (KPI) categories using multi-agent research with built-in bias prevention. It performs live web research to gather current, verifiable metrics. An optional 7th category (Red Hat Engagement) can be included when explicitly requested to measure Red Hat AI Engineering's participation in a project.
 
 ### When to Use This Skill
 
@@ -52,6 +52,16 @@ The evaluation follows six phases with strict quality controls.
 - [ ] Confirm repository is public
 - [ ] Record repository metadata (stars, forks, language, license)
 
+### Phase 1.5: LDAP Prerequisite Check (Conditional)
+
+If Red Hat Engagement analysis is requested, verify prerequisites before dispatch:
+
+- [ ] Verify Kerberos ticket: `klist` — must show a valid TGT
+- [ ] Test LDAP connectivity: `ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid`
+- [ ] If both checks pass: Set `ldap_available=true` for the RH subagent
+- [ ] If either check fails: Set `ldap_available=false` — RH subagent will use email-only fallback with reduced confidence
+- [ ] Log prerequisite check results for inclusion in the report
+
 ### Phase 2: Parallel Research Dispatch
 
 Launch six independent research subagents in parallel. Each subagent:
@@ -67,6 +77,7 @@ Launch six independent research subagents in parallel. Each subagent:
 4. `kpi-documentation-researcher` - Documentation quality metrics
 5. `kpi-adoption-researcher` - Adoption and usage metrics
 6. `kpi-codequality-researcher` - Code quality metrics
+7. `kpi-rh-engagement-researcher` - Red Hat Engagement metrics *(conditional — only if requested)*
 
 See `references/RESEARCH-PROMPTS.md` for subagent prompt templates.
 
@@ -166,6 +177,7 @@ Each research subagent operates in complete isolation to prevent bias contaminat
 | kpi-documentation-researcher | Docs quality, completeness | WebSearch, Read |
 | kpi-adoption-researcher | Usage metrics, trends | WebSearch, WebFetch |
 | kpi-codequality-researcher | Tests, CI, code review | WebSearch, gh CLI |
+| kpi-rh-engagement-researcher | RH employee contributions, governance | ldapsearch, gh CLI, git log *(conditional)* |
 
 ### Launching Subagents
 
@@ -256,6 +268,18 @@ Measures code quality practices and metrics.
 - Linting configuration
 - Type checking (where applicable)
 
+### 7. Red Hat Engagement (Weight: ~14.29% — Conditional)
+
+Measures Red Hat AI Engineering organization's participation and investment. Only evaluated when explicitly requested. When included, all 7 categories are weighted equally at ~14.29%.
+
+- RH PR contributions (percentage of merged PRs)
+- RH release management involvement
+- RH maintainership roles
+- RH roadmap influence
+- RH leadership and governance roles
+
+**Note**: Requires LDAP access to `ldap.corp.redhat.com` for full employee identification. Falls back to email-based identification if LDAP is unavailable.
+
 ## Output Format
 
 The evaluation produces a structured report. See `references/REPORT-TEMPLATE.md` for the complete specification.
@@ -320,6 +344,16 @@ Set custom pass/fail thresholds:
 Evaluate https://github.com/owner/repo with minimum score 4.0
 ```
 
+### Red Hat Engagement Analysis
+
+Include the conditional RH Engagement category to measure Red Hat AI Engineering's participation:
+
+```
+Evaluate https://github.com/owner/repo with Red Hat engagement analysis
+```
+
+This adds a 7th category and adjusts all category weights to ~14.29%. Requires Red Hat internal network access (VPN, Kerberos) for LDAP-based employee identification.
+
 ## Error Handling
 
 ### Common Issues
@@ -330,6 +364,7 @@ Evaluate https://github.com/owner/repo with minimum score 4.0
 | Rate limit exceeded | Too many API calls | Wait and retry, or use authenticated gh |
 | Subagent timeout | Network issues | Retry failed subagent |
 | Missing metrics | Data not available | Noted in report, score adjusted |
+| LDAP unavailable | No Kerberos ticket or network access | RH subagent uses email-only fallback; reduced confidence noted |
 
 ### Partial Results
 

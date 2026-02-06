@@ -130,13 +130,16 @@ Cross-category validation rules to detect data errors and suspicious patterns.
 | R4 | Growing but Dormant | `contributor_growth > 25%` AND `last_commit_recency > 180 days` | Inconsistent data | Flag for investigation - growth metric inconsistent with activity |
 | R5 | Coverage Without Tests | `test_coverage > 0%` AND `test_presence.has_test_directory = false` | Data error | Flag as impossible - coverage requires tests |
 | R6 | Reviews Without PRs | `code_review_practice > 0%` AND sample shows zero merged PRs | Data error | Flag as data collection error |
+| R7 | RH Maintainers Without Contributions | `rh_maintainership >= 3` AND `rh_pr_contributions == 0%` | Inconsistent data | Flag for investigation - maintainers should have some contribution activity |
+| R8 | RH Leadership Without Presence | `rh_leadership_roles >= 4` AND `rh_maintainership == 1` | Suspicious pattern | Flag - governance leadership typically implies maintainer status |
+| R9 | RH Coverage Gap Impact | `rh_coverage_percentage < 70%` | Reduced confidence | Flag all RH metrics as "Reduced Confidence - coverage gap >30%" |
 
 ### Rule Application
 
 During Phase 4 (Cross-Validation), apply all semantic consistency rules:
 
 ```
-For each rule R1-R6:
+For each rule R1-R6 (and R7-R9 when RH Engagement is evaluated):
   1. Evaluate condition using collected metrics
   2. If condition is TRUE, trigger the specified action
   3. Record in cross_validation_results:
@@ -175,6 +178,7 @@ When multiple sources provide conflicting values for the same metric, use this h
 | Level | Source Type | Examples | Trust Reason |
 |-------|-------------|----------|--------------|
 | 1 | GitHub API (authenticated) | `gh api repos/...`, `gh repo view` | Authoritative source, real-time |
+| 1.5 | Corporate LDAP (authenticated) | `ldapsearch` against `ldap.corp.redhat.com` | Authoritative for employee identity and org structure |
 | 2 | Package Registry API | npm registry, PyPI JSON API, crates.io API | Authoritative for package data |
 | 3 | Real-time Analytics | Codecov API, Ecosyste.ms current data | Direct integration, near real-time |
 | 4 | Cached/Historical Analytics | star-history.com, wayback data | May be stale, but verifiable |
@@ -264,6 +268,32 @@ Mark unconfirmed WebSearch claims as:
 - Same metrics applied to all projects
 - Star count is just one metric among many
 - Corporate backing doesn't affect rubric application
+
+### Organizational Affiliation Bias (RH Engagement)
+
+**Risk**: Over-counting or under-counting organizational contributions due to incomplete employee identification.
+
+**Over-counting Risks**:
+- Attributing contributions from former employees who no longer work at RH
+- Counting contractors or interns who are not in the AI Engineering org
+- Including contributions made before an employee joined RH
+
+**Under-counting Risks**:
+- Employees without `rhatSocialURL` set in LDAP (coverage gap)
+- Employees using personal GitHub accounts without `@redhat.com` email
+- Contributions via organization-owned bot accounts
+
+**Coverage Gap Impact**:
+- Coverage gap >30% should flag reduced confidence for all RH metrics
+- When coverage is below 70%, add a note to the executive summary
+- Report unresolved employees explicitly so stakeholders understand the gap
+
+**Mitigations**:
+- LDAP-based org enumeration ensures complete org scope
+- Multi-method GitHub resolution (rhatSocialURL → GitHub discovery → email match)
+- Unresolved employees tracked and reported separately
+- Coverage percentage reported alongside all RH metrics
+- Metrics measured against identified employees only (not extrapolated)
 
 ---
 

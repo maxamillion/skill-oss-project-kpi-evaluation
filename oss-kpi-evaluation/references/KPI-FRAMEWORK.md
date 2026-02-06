@@ -640,6 +640,117 @@ Measures code quality practices, testing, and development standards.
 
 ---
 
+## Category 7: Red Hat Engagement (Conditional)
+
+Measures Red Hat AI Engineering organization's participation, investment, and influence in the project. This category is **conditional** — it is only evaluated when explicitly requested.
+
+**Scope**: Limited to Red Hat AI Engineering (Steven Huels' organization). Employee identification uses LDAP org traversal from `shuels` with GitHub username resolution via `rhatSocialURL`.
+
+**Coverage Gaps**: Employees whose GitHub usernames cannot be determined are tracked separately. When coverage is below 70%, all RH metrics receive a confidence downgrade.
+
+### 7.1 RH PR Contributions
+
+**Definition**: Percentage of merged PRs authored by identified Red Hat AI Engineering org members.
+
+**Data Sources**:
+- LDAP: `ldap.corp.redhat.com` for org member enumeration
+- GitHub API: `gh pr list --state merged` with author filtering
+- Git log: `git log --all --format='%ae %an'` for email-based identification
+
+**Measurement**: (Merged PRs by identified RH employees / Total merged PRs) × 100
+
+**Scoring Rubric**:
+| Score | Threshold |
+|-------|-----------|
+| 5 | ≥30% of merged PRs |
+| 4 | 20-29% of merged PRs |
+| 3 | 10-19% of merged PRs |
+| 2 | 1-9% of merged PRs |
+| 1 | 0% of merged PRs |
+
+### 7.2 RH Release Management
+
+**Definition**: Red Hat employee involvement in project release management.
+
+**Data Sources**:
+- GitHub Releases API: `gh api repos/{owner}/{repo}/releases` (author field)
+- Repository governance files: MAINTAINERS, OWNERS, CODEOWNERS
+- WebSearch for release process documentation
+
+**Measurement**: Identify release authors and cross-reference with identified RH employees.
+
+**Scoring Rubric**:
+| Score | Criteria |
+|-------|----------|
+| 5 | Primary release manager is RH employee with identified succession plan |
+| 4 | Primary release manager is RH employee |
+| 3 | RH employee is one of multiple release managers |
+| 2 | RH employee has release-adjacent role (e.g., release notes, testing) |
+| 1 | No RH employee involvement in release management |
+
+### 7.3 RH Maintainership
+
+**Definition**: Red Hat employees holding maintainer or approver roles in project governance.
+
+**Data Sources**:
+- Repository files: MAINTAINERS, OWNERS, CODEOWNERS
+- GitHub team membership (if accessible)
+- WebSearch for project governance documentation
+
+**Measurement**: Count RH employees listed in governance files with maintainer/approver roles.
+
+**Scoring Rubric**:
+| Score | Criteria |
+|-------|----------|
+| 5 | ≥3 RH maintainers/approvers across subsystems |
+| 4 | 2 RH maintainers/approvers |
+| 3 | 1 RH maintainer/approver |
+| 2 | RH employees have reviewer roles only |
+| 1 | No RH employees in governance roles |
+
+### 7.4 RH Roadmap Influence
+
+**Definition**: Red Hat employee influence on project direction and roadmap.
+
+**Data Sources**:
+- GitHub Issues/Discussions with roadmap labels
+- Project roadmap documents
+- WebSearch for project planning discussions
+- Enhancement proposals or design documents
+
+**Measurement**: Evaluate RH employee participation in roadmap-related issues, proposals, and planning.
+
+**Scoring Rubric**:
+| Score | Criteria |
+|-------|----------|
+| 5 | Leads multiple roadmap items and participates in strategic planning |
+| 4 | Leads ≥1 roadmap item |
+| 3 | Contributes to roadmap discussions |
+| 2 | Participates in discussions without leading |
+| 1 | No evidence of roadmap influence |
+
+### 7.5 RH Leadership Roles
+
+**Definition**: Red Hat employees in project governance and leadership positions.
+
+**Data Sources**:
+- Project governance files (GOVERNANCE.md, steering committee lists)
+- Foundation membership records (CNCF, LF, Apache)
+- WebSearch for project leadership announcements
+
+**Measurement**: Identify RH employees in steering committees, TAC, SIG/workgroup leads, and other governance positions.
+
+**Scoring Rubric**:
+| Score | Criteria |
+|-------|----------|
+| 5 | ≥2 governance positions including chair/lead role |
+| 4 | 1 steering committee or TAC position |
+| 3 | Workgroup or SIG lead |
+| 2 | Member of governance body |
+| 1 | No governance positions held |
+
+---
+
 ## Calculating Scores
 
 ### Metric Score
@@ -665,6 +776,8 @@ Overall Score = Sum(Category Score × Weight) / Sum(Weights)
 ```
 
 Default weights: All categories weighted equally at 16.67% (100% / 6).
+
+When the conditional Red Hat Engagement category is included, all 7 categories are weighted equally at ~14.29% (100% / 7).
 
 ### Score Interpretation
 

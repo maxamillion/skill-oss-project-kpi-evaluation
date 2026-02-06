@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **Claude Code skill** (not a traditional application). It evaluates open source GitHub projects against 30 Key Performance Indicators across 6 categories: Community Health, Maintenance, Security, Documentation, Adoption, and Code Quality.
+This is a **Claude Code skill** (not a traditional application). It evaluates open source GitHub projects against 30 Key Performance Indicators (+ 5 conditional RH Engagement) across 6 categories (+ 1 conditional): Community Health, Maintenance, Security, Documentation, Adoption, Code Quality, and optionally Red Hat Engagement.
 
-The skill uses a **multi-agent architecture** with 6 independent research subagents that run in parallel to prevent bias contamination.
+The skill uses a **multi-agent architecture** with 6 independent research subagents (+ 1 conditional) that run in parallel to prevent bias contamination.
 
 ## Repository Structure
 
@@ -53,6 +53,9 @@ This isolation is intentional for bias prevention. Never share context between s
 | kpi-documentation-researcher | README, API docs, changelog | gh CLI, WebSearch, Read |
 | kpi-adoption-researcher | Stars, downloads, dependents | gh CLI, WebFetch |
 | kpi-codequality-researcher | Tests, CI/CD, code review | gh CLI, WebFetch |
+| kpi-rh-engagement-researcher | RH contributions, maintainership, governance | ldapsearch, gh CLI, git log *(conditional)* |
+
+**Note**: The `kpi-rh-engagement-researcher` is conditional — only dispatched when Red Hat Engagement analysis is explicitly requested. It requires LDAP access to `ldap.corp.redhat.com` (scoped to AI Engineering org under `shuels`) for full employee identification. Falls back to email-based identification if LDAP is unavailable.
 
 ## Key Constraints
 

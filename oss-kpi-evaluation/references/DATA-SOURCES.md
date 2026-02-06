@@ -449,6 +449,101 @@ Provides:
 
 ---
 
+## Red Hat Internal Sources (Conditional)
+
+These sources are only used when the Red Hat Engagement category is explicitly requested. They require Red Hat internal network access.
+
+### Prerequisites
+
+| Requirement | Verification | Failure Mode |
+|-------------|-------------|--------------|
+| Kerberos ticket | `klist` — must show valid TGT | All RH metrics → NOT_AVAILABLE |
+| LDAP connectivity | `ldapsearch -x -h ldap.corp.redhat.com -b dc=redhat,dc=com '(uid=shuels)' uid` | All RH metrics → NOT_AVAILABLE |
+| VPN / internal network | Implicit via LDAP connectivity test | All RH metrics → NOT_AVAILABLE |
+
+### LDAP Org Traversal
+
+Enumerate AI Engineering org members starting from Steven Huels (`shuels`):
+
+```bash
+# Step 1: Find direct reports of shuels
+ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+  '(manager=uid=shuels,ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
+
+# Step 2: Recursively find reports for each manager discovered
+# For each uid returned that has direct reports, repeat the query:
+ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+  '(manager=uid={manager_uid},ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
+
+# Continue until no new reports are found (leaf employees)
+```
+
+### GitHub Username Extraction from LDAP
+
+Parse `rhatSocialURL` field for GitHub usernames:
+
+```bash
+# rhatSocialURL format contains entries like:
+# Github->https://github.com/{username}
+# Extract username from this pattern
+
+# If rhatSocialURL contains a GitHub entry → resolved (high confidence)
+# If rhatSocialURL is absent or has no GitHub entry → unresolved (needs discovery)
+```
+
+### GitHub Username Discovery Fallback
+
+For employees without `rhatSocialURL` GitHub entries:
+
+```bash
+# Search GitHub by name and email
+gh search users "{employee_name}" --limit 5
+
+# Search git log for their @redhat.com email in the target repo
+git log --all --format='%ae %an' | grep -i "{employee_email}"
+
+# Check if any discovered user has commits to @redhat.com-affiliated repos
+```
+
+### Git Email Extraction
+
+Identify RH contributors by email domain:
+
+```bash
+# Extract all committer emails from repo
+git log --all --format='%ae' | sort -u | grep -i '@redhat.com'
+
+# Map emails to contributors
+git log --all --format='%ae %an' | grep -i '@redhat.com' | sort -u
+```
+
+### Governance File Parsing
+
+Identify RH employees in project governance:
+
+```bash
+# Common governance files to check
+gh api repos/{owner}/{repo}/contents/MAINTAINERS
+gh api repos/{owner}/{repo}/contents/OWNERS
+gh api repos/{owner}/{repo}/contents/CODEOWNERS
+gh api repos/{owner}/{repo}/contents/GOVERNANCE.md
+
+# Parse for GitHub usernames matching identified RH employees
+```
+
+### Release Author Identification
+
+Identify who creates releases:
+
+```bash
+# Get release authors
+gh api repos/{owner}/{repo}/releases --jq '.[] | {tag: .tag_name, author: .author.login, date: .published_at}'
+
+# Cross-reference authors with identified RH employees
+```
+
+---
+
 ## Sampling Methodology
 
 When collecting data from populations (issues, PRs, contributors, etc.), follow these sampling requirements to ensure statistical validity.

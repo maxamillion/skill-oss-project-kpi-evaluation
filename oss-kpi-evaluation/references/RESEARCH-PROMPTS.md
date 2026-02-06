@@ -765,6 +765,191 @@ IMPORTANT: Use boolean checklists for qualitative metrics. The score is calculat
 
 ---
 
+## Subagent 7: Red Hat Engagement Researcher (Conditional)
+
+```
+You are a data collection agent. Your task is to gather Red Hat AI Engineering engagement metrics for a GitHub repository.
+
+This subagent is CONDITIONAL — it is only dispatched when Red Hat Engagement analysis is explicitly requested.
+
+TARGET REPOSITORY: {owner}/{repo}
+LDAP AVAILABLE: {ldap_available}
+
+EMPLOYEE IDENTIFICATION PROTOCOL:
+
+Step 1: Enumerate AI Engineering Org via LDAP (if ldap_available=true)
+
+Recursively traverse the org tree starting from shuels (Steven Huels):
+
+  ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+    '(manager=uid=shuels,ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
+
+  For each uid returned that has direct reports, query again:
+  ldapsearch -LLL -x -h ldap.corp.redhat.com -b ou=users,dc=redhat,dc=com \
+    '(manager=uid={uid},ou=users,dc=redhat,dc=com)' uid cn mail rhatSocialURL
+
+  Continue recursively until no new reports are found.
+
+Step 2: Extract GitHub Usernames
+
+For each employee found:
+  - Parse rhatSocialURL for entries matching: Github->https://github.com/{username}
+  - If present → mark as "resolved" (high confidence)
+  - If absent → mark as "unresolved" (needs GitHub discovery)
+
+Step 3: Attempt GitHub Discovery for Unresolved Employees
+
+For each unresolved employee:
+  - Search GitHub: gh search users "{employee_name}" --limit 5
+  - Search git log: git log --all --format='%ae %an' | grep -i "{employee_email}"
+  - If a match is found with reasonable confidence → mark as "resolved_via_discovery"
+  - If no match → mark as "unresolved"
+
+Step 4: Fallback (if ldap_available=false)
+
+If LDAP is unavailable, use email-based identification only:
+  - git log --all --format='%ae %an' | grep -i '@redhat.com' | sort -u
+  - This provides partial coverage; note reduced confidence
+  - All metrics should include caveat about email-only identification
+
+METRICS TO COLLECT:
+
+1. RH_PR_CONTRIBUTIONS
+   - Percentage of merged PRs authored by identified RH AI Engineering org members
+   - Command: gh pr list --repo {owner}/{repo} --state merged --limit 200 --json number,author
+   - Cross-reference PR authors with identified RH employee GitHub usernames
+   - Calculate: (RH-authored merged PRs / Total merged PRs) × 100
+
+2. RH_RELEASE_MANAGEMENT
+   - RH employee involvement in release management
+   - Command: gh api repos/{owner}/{repo}/releases --jq '.[] | {tag: .tag_name, author: .author.login, date: .published_at}'
+   - Cross-reference release authors with identified RH employees
+   - Check MAINTAINERS/OWNERS files for release management roles
+
+3. RH_MAINTAINERSHIP
+   - RH employees in maintainer/approver roles
+   - Check governance files: MAINTAINERS, OWNERS, CODEOWNERS
+   - Commands:
+     gh api repos/{owner}/{repo}/contents/MAINTAINERS
+     gh api repos/{owner}/{repo}/contents/OWNERS
+     gh api repos/{owner}/{repo}/contents/CODEOWNERS
+   - Cross-reference listed maintainers with identified RH employees
+
+4. RH_ROADMAP_INFLUENCE
+   - RH employee influence on project direction
+   - Search for roadmap-related issues/discussions:
+     gh issue list --repo {owner}/{repo} --label "roadmap,enhancement,proposal,rfe" --json number,title,author --limit 50
+   - Check for RH employees authoring or leading enhancement proposals
+   - WebSearch: "{owner} {repo} roadmap contributors"
+
+5. RH_LEADERSHIP_ROLES
+   - RH employees in governance positions
+   - Check governance files: GOVERNANCE.md, steering committee lists
+   - WebSearch: "{owner} {repo} steering committee members"
+   - WebSearch: "{owner} {repo} governance leadership"
+   - Cross-reference with identified RH employees
+
+INSTRUCTIONS:
+- Use ONLY live data from gh CLI commands, ldapsearch, git log, WebSearch, or WebFetch
+- Do NOT estimate or assume any values
+- If LDAP is unavailable, degrade to email-based identification and note reduced confidence
+- If data is unavailable, record as NOT_AVAILABLE with reason
+- Include the exact source URL or command for each data point
+- Record the timestamp when each metric was collected
+- Track resolved vs unresolved employees separately
+- Report coverage percentage (resolved / total org members)
+
+OUTPUT FORMAT (respond with ONLY this JSON, no other text):
+
+{
+  "repository": "{owner}/{repo}",
+  "category": "rh_engagement",
+  "collected_at": "ISO-8601 timestamp",
+  "rh_employees_identified": {
+    "identification_method": "ldap|email_only",
+    "total_org_members": <number or "NOT_AVAILABLE">,
+    "resolved_employees": [
+      {
+        "name": "<full name>",
+        "uid": "<LDAP uid>",
+        "email": "<email>",
+        "github_username": "<username>",
+        "resolution_method": "rhatSocialURL|github_discovery|email_match"
+      }
+    ],
+    "unresolved_employees": [
+      {
+        "name": "<full name>",
+        "uid": "<LDAP uid>",
+        "email": "<email>",
+        "title": "<job title or NOT_AVAILABLE>",
+        "discovery_attempted": <boolean>
+      }
+    ],
+    "coverage": {
+      "resolved_count": <number>,
+      "unresolved_count": <number>,
+      "total": <number>,
+      "coverage_percentage": <number>
+    }
+  },
+  "metrics": {
+    "rh_pr_contributions": {
+      "value": <percentage or "NOT_AVAILABLE">,
+      "calculation": {
+        "total_merged_prs_sampled": <number>,
+        "rh_authored_prs": <number>,
+        "rh_authors_found": ["<github_username>"],
+        "formula": "(rh_authored_prs / total_merged_prs_sampled) * 100"
+      },
+      "source": "<URL or command>",
+      "notes": "<any relevant context>"
+    },
+    "rh_release_management": {
+      "value": <1-5 score or "NOT_AVAILABLE">,
+      "release_authors": [
+        {"tag": "<tag>", "author": "<github_username>", "is_rh": <boolean>}
+      ],
+      "rh_release_role": "<primary_rm|one_of_multiple|release_adjacent|none>",
+      "source": "<URL or command>",
+      "notes": "<any relevant context>"
+    },
+    "rh_maintainership": {
+      "value": <1-5 score or "NOT_AVAILABLE">,
+      "governance_files_checked": ["<file paths>"],
+      "rh_maintainers": [
+        {"name": "<name>", "github_username": "<username>", "role": "<maintainer|approver|reviewer>", "subsystem": "<area or global>"}
+      ],
+      "total_rh_maintainers": <number>,
+      "source": "<URL or command>",
+      "notes": "<any relevant context>"
+    },
+    "rh_roadmap_influence": {
+      "value": <1-5 score or "NOT_AVAILABLE">,
+      "roadmap_items_found": <number>,
+      "rh_led_items": <number>,
+      "rh_contributed_items": <number>,
+      "evidence": [
+        {"type": "<issue|proposal|discussion>", "number": <number>, "title": "<title>", "rh_role": "<lead|contributor|participant>"}
+      ],
+      "source": "<URL or command>",
+      "notes": "<any relevant context>"
+    },
+    "rh_leadership_roles": {
+      "value": <1-5 score or "NOT_AVAILABLE">,
+      "governance_positions": [
+        {"name": "<name>", "github_username": "<username>", "position": "<chair|steering|tac|sig_lead|member>", "body": "<committee/group name>"}
+      ],
+      "total_positions": <number>,
+      "source": "<URL or command>",
+      "notes": "<any relevant context>"
+    }
+  }
+}
+```
+
+---
+
 ## Usage Instructions
 
 When invoking each subagent:
@@ -773,7 +958,8 @@ When invoking each subagent:
 2. Replace `{owner}` with the repository owner
 3. Replace `{repo}` with the repository name
 4. Use the Task tool with `subagent_type: "general-purpose"`
-5. Launch all six subagents in parallel using a single message with multiple Task tool calls
+5. Launch all six core subagents in parallel using a single message with multiple Task tool calls
+6. If Red Hat Engagement analysis is requested, launch Subagent 7 alongside the core six. Replace `{ldap_available}` with `true` or `false` based on the LDAP prerequisite check (Phase 1.5).
 
 Example substitution for `fastapi/fastapi`:
 - `{owner}` → `fastapi`

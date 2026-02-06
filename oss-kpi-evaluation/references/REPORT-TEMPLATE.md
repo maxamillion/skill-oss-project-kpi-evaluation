@@ -16,6 +16,7 @@ This document defines the output format for OSS KPI evaluations.
   ### Documentation
   ### Adoption
   ### Code Quality
+  ### Red Hat Engagement (conditional — only if requested)
 ## Cross-Validation Results
 ## Data Quality Assessment
 ## Methodology Notes
@@ -175,6 +176,73 @@ Each category follows the same format.
 
 ---
 
+### 3a. Red Hat Engagement (Conditional)
+
+**Purpose**: Document Red Hat AI Engineering organization's participation in the project. Only included when Red Hat Engagement analysis is explicitly requested.
+
+**Disclaimer**: RH Engagement scores measure organizational participation, not project quality. A low RH Engagement score does not indicate a low-quality project.
+
+**Format**:
+```markdown
+### Red Hat Engagement
+
+> **Note**: RH Engagement scores measure organizational participation and investment, not project quality.
+
+**Category Score**: X.X/5.0 ({rating})
+**Category Confidence**: {High|Medium|Low|Very Low}
+**Identification Method**: {LDAP org traversal|Email-only fallback}
+
+#### RH AI Engineering Org Coverage
+
+| Metric | Value |
+|--------|-------|
+| Total org members (LDAP) | X |
+| GitHub username resolved | X |
+| GitHub username unresolved | X |
+| Coverage | X% |
+
+{If coverage < 70%}
+> ⚠️ **Coverage Gap Warning**: Coverage is below 70%. RH engagement metrics may undercount actual contributions. All metrics in this category have reduced confidence.
+{/If}
+
+#### Unresolved Employees
+
+The following AI Engineering org members could not be correlated to a GitHub username.
+Their contributions may not be reflected in the metrics above.
+
+| Name | Email | Title | Discovery Attempted |
+|------|-------|-------|---------------------|
+| ... | ...@redhat.com | ... | Yes/No |
+
+#### Metrics
+
+| Metric | Value | Score | Confidence | Notes |
+|--------|-------|-------|------------|-------|
+| RH PR Contributions | X% | X/5 | {High|Med|Low} | {threshold met} |
+| RH Release Management | {description} | X/5 | {High|Med|Low} | {evidence summary} |
+| RH Maintainership | {count} maintainers | X/5 | {High|Med|Low} | {roles identified} |
+| RH Roadmap Influence | {description} | X/5 | {High|Med|Low} | {evidence summary} |
+| RH Leadership Roles | {count} positions | X/5 | {High|Med|Low} | {positions held} |
+
+#### Evidence Table
+
+| Metric | Source | Authority | Retrieved | Verified |
+|--------|--------|-----------|-----------|----------|
+| RH PR Contributions | [gh pr list](command) | L1 | {timestamp} | ✓/✗ |
+| RH Employee ID | [LDAP](ldapsearch) | L1.5 | {timestamp} | ✓/✗ |
+| RH Maintainership | [MAINTAINERS](url) | L1 | {timestamp} | ✓/✗ |
+| ... | ... | ... | ... | ... |
+
+#### Observations
+
+- {X}% of merged PRs authored by identified RH AI Engineering employees ({Y} of {Z} employees resolved)
+- {Factual observation about maintainership}
+- {Factual observation about governance roles}
+- {Note about coverage gaps if applicable}
+```
+
+---
+
 ### 4. Cross-Validation Results
 
 **Purpose**: Document verification of overlapping metrics and discrepancies.
@@ -217,7 +285,7 @@ If no discrepancies: "No discrepancies exceeding 10% variance were detected."
 
 ### Collection Summary
 
-- **Total Metrics Defined**: 30
+- **Total Metrics Defined**: 30 (35 with RH Engagement)
 - **Metrics Successfully Collected**: {X}
 - **Metrics Unavailable**: {Y}
 - **Collection Timestamp**: {ISO-8601}
@@ -367,7 +435,7 @@ For programmatic consumption, the report can also be output as JSON.
     "confidence": "High|Medium|Low|Very Low",
     "confidence_score": 0.0,
     "metrics_available": 0,
-    "metrics_total": 30,
+    "metrics_total": "30 (or 35 with RH Engagement)",
     "metrics_verified": 0
   },
   "category_scores": {
@@ -390,6 +458,21 @@ For programmatic consumption, the report can also be output as JSON.
       }
     }
     // ... other categories
+    // When RH Engagement is included:
+    "rh_engagement": {
+      "score": 0.0,
+      "rating": "string",
+      "weight": 0.1429,
+      "conditional": true,
+      "metrics_available": 0,
+      "metrics_total": 5,
+      "confidence": {
+        "rating": "High|Medium|Low|Very Low",
+        "score": 0.0,
+        "coverage_percentage": 0.0,
+        "coverage_gap_impact": "none|reduced_confidence"
+      }
+    }
   },
   "detailed_findings": {
     "community_health": {
@@ -460,7 +543,7 @@ For programmatic consumption, the report can also be output as JSON.
     "verified": [],
     "discrepancies": [],
     "semantic_consistency": {
-      "rules_evaluated": ["R1", "R2", "R3", "R4", "R5", "R6"],
+      "rules_evaluated": ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9"],
       "rules_passed": [],
       "rules_failed": [],
       "flags": []

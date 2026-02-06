@@ -97,6 +97,20 @@
         "name": "growth_activity_consistency",
         "condition": "if contributor_growth > 25 and last_commit_recency > 180 then flag",
         "error_action": "Flag as inconsistent - growth without recent activity"
+      },
+      {
+        "id": "B6",
+        "name": "rh_contribution_bound",
+        "condition": "if rh_pr_contributions > 100 then flag",
+        "error_action": "Flag as data error - RH contribution percentage cannot exceed 100%",
+        "applies_to": "rh_engagement"
+      },
+      {
+        "id": "B7",
+        "name": "rh_maintainer_consistency",
+        "condition": "if rh_maintainership >= 3 and rh_pr_contributions == 0 then flag",
+        "error_action": "Flag as inconsistent - maintainers without contributions",
+        "applies_to": "rh_engagement"
       }
     ]
   },
@@ -107,6 +121,15 @@
     "documentation": 0.1667,
     "adoption": 0.1667,
     "code_quality": 0.1667
+  },
+  "default_weights_with_rh_engagement": {
+    "community_health": 0.1429,
+    "maintenance": 0.1429,
+    "security": 0.1429,
+    "documentation": 0.1429,
+    "adoption": 0.1429,
+    "code_quality": 0.1429,
+    "rh_engagement": 0.1429
   },
   "categories": {
     "community_health": {
@@ -600,6 +623,75 @@
             "3": {"min": 2.0, "max": 3.4, "description": "2.0-3.4 weighted items present"},
             "2": {"min": 1.0, "max": 1.9, "description": "1.0-1.9 weighted items present"},
             "1": {"max": 0.9, "description": "<1.0 weighted items present"}
+          }
+        }
+      }
+    },
+    "rh_engagement": {
+      "name": "Red Hat Engagement",
+      "description": "Measures Red Hat AI Engineering organization's participation and investment in the project",
+      "conditional": true,
+      "condition_description": "Only evaluated when explicitly requested by user",
+      "metrics": {
+        "rh_pr_contributions": {
+          "name": "RH PR Contributions",
+          "description": "Percentage of merged PRs authored by identified Red Hat AI Engineering org members",
+          "type": "percentage",
+          "unit": "percent",
+          "thresholds": {
+            "5": { "min": 30, "description": "≥30% of merged PRs by RH employees" },
+            "4": { "min": 20, "max": 29, "description": "20-29% of merged PRs by RH employees" },
+            "3": { "min": 10, "max": 19, "description": "10-19% of merged PRs by RH employees" },
+            "2": { "min": 1, "max": 9, "description": "1-9% of merged PRs by RH employees" },
+            "1": { "max": 0, "description": "0% of merged PRs by RH employees" }
+          }
+        },
+        "rh_release_management": {
+          "name": "RH Release Management",
+          "description": "Red Hat employee involvement in project release management",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Primary release manager is RH employee with identified succession plan" },
+            "4": { "criteria": "Primary release manager is RH employee" },
+            "3": { "criteria": "RH employee is one of multiple release managers" },
+            "2": { "criteria": "RH employee has release-adjacent role (e.g., release notes, testing)" },
+            "1": { "criteria": "No RH employee involvement in release management" }
+          }
+        },
+        "rh_maintainership": {
+          "name": "RH Maintainership",
+          "description": "Red Hat employees holding maintainer or approver roles in project governance",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "≥3 RH maintainers/approvers across subsystems" },
+            "4": { "criteria": "2 RH maintainers/approvers" },
+            "3": { "criteria": "1 RH maintainer/approver" },
+            "2": { "criteria": "RH employees have reviewer roles only" },
+            "1": { "criteria": "No RH employees in governance roles" }
+          }
+        },
+        "rh_roadmap_influence": {
+          "name": "RH Roadmap Influence",
+          "description": "Red Hat employee influence on project direction and roadmap",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "Leads multiple roadmap items and participates in strategic planning" },
+            "4": { "criteria": "Leads ≥1 roadmap item" },
+            "3": { "criteria": "Contributes to roadmap discussions" },
+            "2": { "criteria": "Participates in discussions without leading" },
+            "1": { "criteria": "No evidence of roadmap influence" }
+          }
+        },
+        "rh_leadership_roles": {
+          "name": "RH Leadership Roles",
+          "description": "Red Hat employees in project governance and leadership positions",
+          "type": "qualitative",
+          "thresholds": {
+            "5": { "criteria": "≥2 governance positions including chair/lead role" },
+            "4": { "criteria": "1 steering committee or TAC position" },
+            "3": { "criteria": "Workgroup or SIG lead" },
+            "2": { "criteria": "Member of governance body" },
+            "1": { "criteria": "No governance positions held" }
           }
         }
       }
