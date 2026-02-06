@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "maxamillion-skill-oss-project-kpi-evaluation",
+  "description": "Evaluate open source GitHub projects against 30 KPIs across community health, maintenance, security, documentation, adoption, and code quality",
+  "owner": {
+    "name": "Adam Miller",
+    "email": "admiller@redhat.com"
+  },
+  "plugins": [
+    {
+      "name": "oss-kpi-evaluation",
+      "description": "Evaluates open source projects against 30 Key Performance Indicators using multi-agent research with parallel subagents for bias-free assessment",
+      "author": {
+        "name": "Adam Miller",
+        "email": "admiller@redhat.com"
+      },
+      "source": "./oss-kpi-evaluation",
+      "category": "security",
+      "homepage": "https://github.com/maxamillion/skill-oss-project-kpi-evaluation"
+    }
+  ]
+}

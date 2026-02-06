@@ -1,0 +1,8 @@
+{
+  "name": "oss-kpi-evaluation",
+  "description": "Evaluates open source projects against 30 Key Performance Indicators using multi-agent research with parallel subagents for bias-free assessment",
+  "author": {
+    "name": "Adam Miller",
+    "email": "admiller@redhat.com"
+  }
+}

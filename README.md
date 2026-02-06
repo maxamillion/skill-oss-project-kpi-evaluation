@@ -28,8 +28,8 @@ A Claude Code skill that evaluates open source projects against Key Performance 
 Add the marketplace and install the plugin:
 
 ```bash
-/plugin marketplace add admiller/skill-oss-project-kpi-evaluation
-/plugin install oss-kpi-evaluation@admiller-skill-oss-project-kpi-evaluation
+/plugin marketplace add maxamillion/skill-oss-project-kpi-evaluation
+/plugin install oss-kpi-evaluation@maxamillion-skill-oss-project-kpi-evaluation
 ```
 
 Or use the interactive plugin manager:
@@ -42,7 +42,7 @@ Or use the interactive plugin manager:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/admiller/skill-oss-project-kpi-evaluation.git
+   git clone https://github.com/maxamillion/skill-oss-project-kpi-evaluation.git
    ```
 
 2. Add as a local marketplace and install:
